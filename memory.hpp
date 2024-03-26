@@ -9,8 +9,20 @@
 
 constexpr uint64_t ONES = std::numeric_limits<uint64_t>::max();
 
-class memory {
+
+#define ALGORITHM algorithm_stars
+#define MEMORY memory_pairs
+
+class algorithm_stars {
 public:
+    static constexpr uint64_t max_memory = max_MEMORY;
+};
+
+
+class memory_pairs {
+public:
+
+
     uint64_t data = 0;
 
     uint64_t access(int pos) const {
@@ -44,7 +56,7 @@ public:
         }
     }
 
-    // Higher-order functions for accessing memory with respect to the canonical ordering.
+    // Higher-order functions for accessing MEMORY with respect to the canonical ordering.
 
     uint64_t access_sorted_pair(int i, int j) const {
         return access(canonical_order[i*LISTSIZE+j]);

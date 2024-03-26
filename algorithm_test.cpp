@@ -3,7 +3,7 @@
 int main(void) {
 
     permutation start = {2, 0, 3, 1};
-    memory m;
+    memory_pairs m;
 
     m.flag_sorted_pair(2,3);
     m.flag_sorted_pair(1,3);

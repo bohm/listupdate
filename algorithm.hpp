@@ -6,10 +6,12 @@
 
 constexpr bool ALG_DEBUG = false;
 
+
+
 #define ALG_SINGLE_STEP alg_single_step_original
 
-// Returns ALG's cost and may edit both permutation and memory.
-int alg_single_step_original(permutation *perm, memory *mem, unsigned short presented_item) {
+// Returns ALG's cost and may edit both permutation and MEMORY.
+int alg_single_step_original(permutation *perm, MEMORY *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         print_permutation_and_memory(perm, *mem);

@@ -32,9 +32,9 @@ void compute_alg_outedges(algorithm_vertex *alg_v) {
             alg_new_perm[i] = inverse[alg_v->ar[i]];
         }
 
-        memory alg_new_mem = recompute_memory(alg_v->memory, &inverse);
+        memory_pairs alg_new_mem = recompute_memory(alg_v->memory_pairs, &inverse);
 
-        // Find adv_vertex (memory, permutation);
+        // Find adv_vertex (memory_pairs, permutation);
 
         // Compute edge cost.
 

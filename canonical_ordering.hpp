@@ -21,4 +21,4 @@ constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_ordering() {
 
 constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_order = canonical_ordering();
 
-constexpr uint64_t max_memory = (1LLU << (canonical_order[(LISTSIZE-2)*LISTSIZE+(LISTSIZE-1)]+1))-1;
+constexpr uint64_t max_MEMORY = (1LLU << (canonical_order[(LISTSIZE - 2) * LISTSIZE + (LISTSIZE - 1)] + 1)) - 1;

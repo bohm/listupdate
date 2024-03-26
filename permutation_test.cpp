@@ -11,8 +11,8 @@ void print_canonical_order() {
 }
 int main(void) {
     print_canonical_order();
-    fprintf(stderr, "Memory can be any integer from 0 to %" PRIu64 ".\n", max_memory);
-    memory m;
+    fprintf(stderr, "Memory can be any integer from 0 to %" PRIu64 ".\n", max_memory_pairs);
+    memory_pairs m;
     m.flag_sorted_pair(2,3);
     m.flag_sorted_pair(1,3);
     m.flag_sorted_pair(0,1);
@@ -27,12 +27,12 @@ int main(void) {
 
     permutation test_inverse = {1,2,3,0};
 
-    memory m2 = recompute_memory(m,&test_inverse);
+    memory_pairs m2 = recompute_memory(m, &test_inverse);
     print_memory_info(m2);
     fprintf(stderr, "---\n");
 
     permutation inv_test_p = {3,1,2,0};
-    memory inv_test_m;
+    memory_pairs inv_test_m;
     inv_test_m.flag_sorted_pair(2,3);
     inv_test_m.flag_sorted_pair(1,3);
     inv_test_m.flag_sorted_pair(0,1);
@@ -45,7 +45,7 @@ int main(void) {
     swap(&opt_p, opt_position_swap);
 
     recompute_alg_perm(&inv_test_p, &opt_p);
-    memory inv_test_m2 = recompute_memory(inv_test_m, &opt_p);
+    memory_pairs inv_test_m2 = recompute_memory(inv_test_m, &opt_p);
     print_permutation_and_memory(&inv_test_p, inv_test_m2);
     fprintf(stderr, "---\n");
 

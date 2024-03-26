@@ -6,7 +6,7 @@
 
 int main(void) {
 
-    memory m;
+    memory_pairs m;
     m.print_memory();
 
     m.set_true(0);

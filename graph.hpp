@@ -13,7 +13,7 @@
 
 class adversary_vertex;
 
-using vert_container = std::array<adversary_vertex*, max_memory+1>;
+using vert_container = std::array<adversary_vertex*, ALGORITHM::max_memory + 1>;
 
 class graph;
 
@@ -22,7 +22,7 @@ public:
     uint64_t edgecounter = 0;
     std::array<vert_container, factorial(LISTSIZE)> verts;
 
-    adversary_vertex *get_vert(permutation *perm, memory m) const
+    adversary_vertex *get_vert(permutation *perm, MEMORY m) const
     {
         return verts[lexindex_quadratic(perm)][m.data];
     }
@@ -72,14 +72,14 @@ class adversary_vertex {
 public:
     uint64_t id;
     permutation perm;
-    memory mem;
+    MEMORY mem;
     std::vector<adv_outedge*> edgelist = {};
 
 
-    adversary_vertex(permutation *p, memory m) {
+    adversary_vertex(permutation *p, MEMORY m) {
         perm = *p;
         mem = m;
-        id = lexindex_quadratic(&perm) * (max_memory+1) + mem.data;
+        id = lexindex_quadratic(&perm) * (ALGORITHM::max_memory + 1) + mem.data;
     }
 
     inline int position(short item) const {
@@ -94,7 +94,7 @@ public:
     void build_presentation_edges() {
         for (short item = 0; item < LISTSIZE; item++) {
             permutation perm_copy(perm);
-            memory mem_copy(mem);
+            MEMORY mem_copy(mem);
             int alg_cost = ALG_SINGLE_STEP(&perm_copy, &mem_copy, item);
             int opt_cost = item;
             adversary_vertex *target = g.get_vert(&perm_copy, mem_copy);
@@ -109,7 +109,7 @@ public:
             swap(&single_swap, opt_swap);
 
             permutation perm_copy(perm);
-            memory mem_copy = recompute_memory(mem, &single_swap);
+            MEMORY mem_copy = recompute_memory(mem, &single_swap);
             recompute_alg_perm(&perm_copy, &single_swap);
             adversary_vertex *target = g.get_vert(&perm_copy, mem_copy);
             auto *edge = new adv_outedge(g.edgecounter++, this, target, opt_swap);
@@ -146,15 +146,15 @@ void adv_outedge::print(FILE* f) {
 
 }
 
-void add_vertex_to_graph(permutation *perm, memory m) {
+void add_vertex_to_graph(permutation *perm, MEMORY m) {
     auto *v = new adversary_vertex(perm, m);
     g.verts[lexindex_quadratic(perm)][m.data] = v;
 }
 
 
 adversary_vertex* graph::get_vert(long int id) {
-        uint64_t memory_section = id % (max_memory+1);
-        uint64_t permutation_section = id / (max_memory+1);
+        uint64_t memory_section = id % (ALGORITHM::max_memory + 1);
+        uint64_t permutation_section = id / (ALGORITHM::max_memory + 1);
         assert((long int) verts[permutation_section][memory_section]->id == id);
         return verts[permutation_section][memory_section];
 }
@@ -220,7 +220,7 @@ void print_vertex_sequence(std::vector<long int> seq) {
 }
 
 void bellman_ford() {
-    long unsigned int n = factorial(LISTSIZE)*(max_memory+1);
+    long unsigned int n = factorial(LISTSIZE)*(ALGORITHM::max_memory + 1);
     fprintf(stderr, "There are %ld vertices in the graph.\n", n);
 
     cost_t *distances;
@@ -304,11 +304,15 @@ void bellman_ford() {
                     fprintf(stderr, "One negative sequence (cycle with tail) has length %zu.\n", cycle.size());
 		    std::reverse(cycle.begin(), cycle.end());
                     print_vertex_sequence(cycle);
+
+                    free(pred);
+                    free(distances);
                     return;
                 }
             }
         }
     }
     fprintf(stderr, "No negative cycles present.\n");
-    return;
+    free(pred);
+    free(distances);
 }

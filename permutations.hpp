@@ -15,8 +15,8 @@ void recompute_alg_perm(permutation *alg_p, permutation *opt_single_swap) {
     }
 }
 
-memory recompute_memory(memory m, permutation* alg_relabeling) {
-    memory new_mem;
+MEMORY recompute_memory(MEMORY m, permutation* alg_relabeling) {
+    MEMORY new_mem;
     for (int i = 0; i < LISTSIZE; i++) {
         for (int j = i+1; j < LISTSIZE; j++) {
             uint64_t val = m.access(canonical_order[i*LISTSIZE+j]);
@@ -34,7 +34,7 @@ memory recompute_memory(memory m, permutation* alg_relabeling) {
     return new_mem;
 }
 
-void print_memory_info(memory m) {
+void print_memory_info(MEMORY m) {
     for (int i = 0; i < LISTSIZE; i++) {
         for (int j = i + 1; j < LISTSIZE; j++) {
             uint64_t bit = m.access_sorted_pair(i,j);
@@ -109,12 +109,12 @@ void iterate_over_permutations(void (*permutation_pointer_function)(permutation 
     while(increase(&iterator));
 }
 
-void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function)(permutation *, memory)) {
+void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function)(permutation *, MEMORY)) {
     permutation iterator = IDENTITY;
 
     do {
-        memory m;
-        while (m.data <= max_memory) {
+        MEMORY m;
+        while (m.data <= ALGORITHM::max_memory) {
             perm_and_memory_pointer_function(&iterator, m);
             m.data++;
         }
@@ -138,7 +138,7 @@ void print_permutation(permutation *perm, FILE *f = stderr, bool newline = true)
     }
 }
 
-void print_permutation_and_memory(permutation *perm, memory m) {
+void print_permutation_and_memory(permutation *perm, MEMORY m) {
     print_permutation(perm);
     print_memory_info(m);
 }
