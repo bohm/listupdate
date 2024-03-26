@@ -6,6 +6,7 @@
 #include <cassert>
 #include <limits>
 #include <unordered_set>
+#include <algorithm>
 #include "memory.hpp"
 #include "permutations.hpp"
 #include "algorithm.hpp"
@@ -222,8 +223,11 @@ void bellman_ford() {
     long unsigned int n = factorial(LISTSIZE)*(max_memory+1);
     fprintf(stderr, "There are %ld vertices in the graph.\n", n);
 
-    cost_t distances[n];
-    long int pred[n];
+    cost_t *distances;
+    long int *pred;
+
+    distances = (cost_t*) malloc(n*sizeof(cost_t));
+    pred = (long int*) malloc(n*sizeof(long int));
 
     for (long unsigned int i = 0; i < n; i ++) {
         distances[i] = (cost_t) INT64_MAX;
@@ -298,7 +302,7 @@ void bellman_ford() {
                     }
                     cycle.push_back(p);
                     fprintf(stderr, "One negative sequence (cycle with tail) has length %zu.\n", cycle.size());
-                    reverse(cycle.begin(), cycle.end());
+		    std::reverse(cycle.begin(), cycle.end());
                     print_vertex_sequence(cycle);
                     return;
                 }
