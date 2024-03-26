@@ -3,6 +3,18 @@
 #include <array>
 #include "memory.hpp"
 
+
+constexpr uint64_t factorial (uint64_t n) {
+    return n <= 1 ? 1 : (n* factorial(n-1));
+}
+
+
+void recompute_alg_perm(permutation *alg_p, permutation *opt_single_swap) {
+    for (int i = 0; i <LISTSIZE; i++) {
+        (*alg_p)[i] = (*opt_single_swap)[(*alg_p)[i]];
+    }
+}
+
 memory recompute_memory(memory m, permutation* alg_relabeling) {
     memory new_mem;
     for (int i = 0; i < LISTSIZE; i++) {
@@ -111,18 +123,53 @@ void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function
 
 }
 
-void print_permutation(permutation *perm) {
-    fprintf(stderr, "(");
+void print_permutation(permutation *perm, FILE *f = stderr, bool newline = true) {
+    fprintf(f, "(");
     for (int i = 0; i < LISTSIZE; i++) {
-        fprintf(stderr, "%hd", (*perm)[i]);
+        fprintf(f, "%hd", (*perm)[i]);
         if (i<LISTSIZE-1) {
-            fprintf(stderr, ",");
+            fprintf(f, ",");
         }
     }
-    fprintf(stderr, ")\n");
+    fprintf(f, ")");
+
+    if(newline) {
+        fprintf(f, "\n");
+    }
 }
 
 void print_permutation_and_memory(permutation *perm, memory m) {
     print_permutation(perm);
     print_memory_info(m);
+}
+
+// Quadratic lexicographic order, should be good enough for short arrays.
+uint64_t lexindex_quadratic(permutation *perm) {
+    uint64_t ret = 0;
+    for ( int i = 0; i < LISTSIZE; i ++) {
+        uint64_t relative_position = 0;
+        if (i >= 1) {
+            for (int j = i+1; j < LISTSIZE; j++) {
+                if ((*perm)[j] < (*perm)[i] ) {
+                    relative_position++;
+                }
+            }
+        } else {
+            relative_position = (*perm)[i];
+        }
+
+        ret += relative_position*factorial(LISTSIZE-1-i);
+    }
+
+    return ret;
+}
+
+// Performs a trivial swap.
+void swap(permutation *perm, int swap_target) {
+    // Allow for no-ops.
+    if (swap_target == -1) {
+        return;
+    }
+
+    std::swap( (*perm)[swap_target], (*perm)[swap_target+1]);
 }

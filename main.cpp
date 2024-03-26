@@ -6,47 +6,8 @@
 #include "memory.hpp"
 #include "permutations.hpp"
 
-class adversary_vertex;
-class algorithm_vertex;
 
 
-class adv_outedge {
-public:
-    adversary_vertex *from = nullptr;
-    algorithm_vertex *to = nullptr;
-    short presented_item = 0;
-    int alg_minus_opt_cost = 0;
-};
-
-class alg_outedge {
-    algorithm_vertex *from = nullptr;
-    adversary_vertex *to = nullptr;
-    short opt_cost = 0;
-};
-
-// A vertex before OPT presents an item.
-class adversary_vertex {
-public:
-    std::array<short, LISTSIZE> ar;
-    uint64_t memory = 0;
-    std::vector<adv_outedge> edgelist = {};
-    inline int position(short item) const {
-        for (int i = 0; i < LISTSIZE; i++) {
-            if (ar[i] == item) {
-                return i;
-            }
-        }
-        return 0;
-    }
-};
-
-// A vertex just after ALG finished processing the vertex.
-class algorithm_vertex {
-public:
-    permutation ar;
-    uint64_t memory = 0;
-    std::vector<alg_outedge> edgelist = {};
-};
 
 
 std::pair<permutation*, uint64_t> edge_to_optstate(algorithm_vertex *v, permutation* new_opt_perm) {
@@ -85,7 +46,7 @@ void compute_alg_outedges(algorithm_vertex *alg_v) {
 short inversion_count_quad(permutation* perm) {
     short inversions = 0;
     for (int i = 0; i < LISTSIZE; i++) {
-        for (int j = i+1; j < LISTSIZE j++) {
+        for (int j = i+1; j < LISTSIZE; j++) {
             if (perm[j] < perm[i]) {
                 inversions++;
             }

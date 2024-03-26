@@ -8,4 +8,8 @@ add_executable(listupdate main.cpp
         memory_test.cpp
         permutations.hpp
         permutation_test.cpp
-        canonical_ordering.hpp)
+        canonical_ordering.hpp
+        graph.hpp
+        algorithm.hpp
+        algorithm_test.cpp)
+add_executable(graph_debug graph_test.cpp)

@@ -1,7 +1,10 @@
 #pragma once
 #include <array>
 
-constexpr unsigned short LISTSIZE = 4;
+// using cost_t = long int;
+using cost_t = long double;
+
+constexpr unsigned short LISTSIZE = 6;
 
 using permutation = std::array<short, LISTSIZE>;
 
