@@ -1,8 +1,5 @@
-//
-// Created by bohm on 19.3.24.
-//
-
-#include "memory.hpp"
+#include "memory_pairs.hpp"
+#include "memory_bitfield.hpp"
 
 int main(void) {
 
@@ -22,5 +19,8 @@ int main(void) {
     m.set_false(1);
     m.print_memory();
 
+
+    memory_bitfield m2;
+    fprintf(stderr, "The possible values of memory are [0, %lu].\n", m2.max);
     return 0;
 }

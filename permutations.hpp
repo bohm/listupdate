@@ -1,8 +1,8 @@
 #pragma once
 
 #include <array>
-#include "memory.hpp"
-
+#include "memory_pairs.hpp"
+#include "memory_bitfield.hpp"
 
 constexpr uint64_t factorial (uint64_t n) {
     return n <= 1 ? 1 : (n* factorial(n-1));
@@ -15,35 +15,7 @@ void recompute_alg_perm(permutation *alg_p, permutation *opt_single_swap) {
     }
 }
 
-MEMORY recompute_memory(MEMORY m, permutation* alg_relabeling) {
-    MEMORY new_mem;
-    for (int i = 0; i < LISTSIZE; i++) {
-        for (int j = i+1; j < LISTSIZE; j++) {
-            uint64_t val = m.access(canonical_order[i*LISTSIZE+j]);
-            if (val == 1) {
-                // fprintf(stderr, "The pair (%d,%d) needs to be relabeled.\n", i, j);
-                int relabeled_i = (*alg_relabeling)[i];
-                int relabeled_j = (*alg_relabeling)[j];
-                // fprintf(stderr, "The relabeled positions are (%d,%d).\n", relabeled_i, relabeled_j);
-                int relabeled_min = std::min(relabeled_i, relabeled_j);
-                int relabeled_max = std::max(relabeled_i, relabeled_j);
-                new_mem.set_true(canonical_order[relabeled_min*LISTSIZE+relabeled_max]);
-            }
-        }
-    }
-    return new_mem;
-}
 
-void print_memory_info(MEMORY m) {
-    for (int i = 0; i < LISTSIZE; i++) {
-        for (int j = i + 1; j < LISTSIZE; j++) {
-            uint64_t bit = m.access_sorted_pair(i,j);
-            if (bit == 1) {
-                fprintf(stderr, "The pair (%d,%d) has been flagged.\n", i, j);
-            }
-        }
-    }
-}
 
 constexpr permutation identity() {
     permutation ret {0};
@@ -114,7 +86,7 @@ void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function
 
     do {
         MEMORY m;
-        while (m.data <= ALGORITHM::max_memory) {
+        while (m.data <= MEMORY::max) {
             perm_and_memory_pointer_function(&iterator, m);
             m.data++;
         }
@@ -138,9 +110,9 @@ void print_permutation(permutation *perm, FILE *f = stderr, bool newline = true)
     }
 }
 
-void print_permutation_and_memory(permutation *perm, MEMORY m) {
+template <class mem> void print_permutation_and_memory(permutation *perm, mem m) {
     print_permutation(perm);
-    print_memory_info(m);
+    m.full_print();
 }
 
 // Quadratic lexicographic order, should be good enough for short arrays.

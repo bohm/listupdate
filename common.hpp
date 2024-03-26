@@ -4,7 +4,19 @@
 // using cost_t = long int;
 using cost_t = long double;
 
-constexpr unsigned short LISTSIZE = 6;
+constexpr unsigned short LISTSIZE = 4;
+
+// #define MEMORY memory_pairs
+// #define ALG_SINGLE_STEP alg_single_step_original
+
+#define MEMORY memory_bitfield
+#define ALG_SINGLE_STEP alg_single_step_bitfield
+
+
+// constexpr long double RATIO = 3.6667;
+constexpr long double RATIO = 3.85;
+#define EDGE_WEIGHT edge_weight_param
+
 
 using permutation = std::array<short, LISTSIZE>;
 
@@ -21,4 +33,4 @@ constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_ordering() {
 
 constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_order = canonical_ordering();
 
-constexpr uint64_t max_MEMORY = (1LLU << (canonical_order[(LISTSIZE - 2) * LISTSIZE + (LISTSIZE - 1)] + 1)) - 1;
+constexpr uint64_t max_memory_pairs = (1LLU << (canonical_order[(LISTSIZE - 2) * LISTSIZE + (LISTSIZE - 1)] + 1)) - 1;

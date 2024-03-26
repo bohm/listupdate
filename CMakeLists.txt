@@ -3,13 +3,12 @@ project(listupdate)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(listupdate main.cpp
-        memory.hpp
-        memory_test.cpp
+add_executable(listupdate
+        main.cpp
+        memory_pairs.hpp
         permutations.hpp
-        permutation_test.cpp
-        canonical_ordering.hpp
+        common.hpp
         graph.hpp
         algorithm.hpp
-        algorithm_test.cpp)
-add_executable(graph_debug graph_test.cpp)
+        bellman_ford.hpp
+        memory_bitfield.hpp)

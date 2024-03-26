@@ -1,17 +1,67 @@
 #pragma once
 
-#include "memory.hpp"
+#include "memory_pairs.hpp"
 #include "permutations.hpp"
+#include "memory_bitfield.hpp"
 
 
 constexpr bool ALG_DEBUG = false;
 
 
+int alg_single_step_bitfield(permutation *perm, memory_bitfield *mem, unsigned short presented_item) {
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
+        print_permutation_and_memory<memory_bitfield>(perm, *mem);
+    }
 
-#define ALG_SINGLE_STEP alg_single_step_original
+    int alg_cost = 0;
+    int item_pos = 0;
+    uint64_t flag_cnt = 0;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            break;
+        }
+    }
 
-// Returns ALG's cost and may edit both permutation and MEMORY.
-int alg_single_step_original(permutation *perm, MEMORY *mem, unsigned short presented_item) {
+    uint64_t position_bit = mem->access(presented_item);
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG found the item at position %d, and bit value is %lu.\n", item_pos,
+                position_bit);
+    }
+
+    alg_cost += item_pos;
+    if (position_bit == 0) {
+        if (item_pos != 0) {
+            mem->set_true(presented_item);
+        }
+        if (ALG_DEBUG && item_pos != 0) {
+            fprintf(stderr, "ALG will not swap, the bit was not set.\n");
+        } else if (ALG_DEBUG) {
+            fprintf(stderr, "ALG has %d in front, it will not swap.\n", presented_item);
+        }
+    } else {
+        if (ALG_DEBUG) {
+            fprintf(stderr, "ALG will swap.\n");
+        }
+
+        mem->set_false(presented_item);
+
+        while(item_pos > 0) {
+            swap(perm, item_pos-1);
+            alg_cost++;
+            item_pos--;
+        }
+    }
+
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG's cost: %d.\n", alg_cost);
+    }
+    return alg_cost;
+}
+
+
+// Returns ALG's cost and may edit both permutation and memory.
+int alg_single_step_original(permutation *perm, memory_pairs *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         print_permutation_and_memory(perm, *mem);

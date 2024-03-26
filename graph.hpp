@@ -7,13 +7,13 @@
 #include <limits>
 #include <unordered_set>
 #include <algorithm>
-#include "memory.hpp"
+#include "memory_pairs.hpp"
 #include "permutations.hpp"
 #include "algorithm.hpp"
 
 class adversary_vertex;
 
-using vert_container = std::array<adversary_vertex*, ALGORITHM::max_memory + 1>;
+using vert_container = std::array<adversary_vertex*, MEMORY::max + 1>;
 
 class graph;
 
@@ -79,7 +79,7 @@ public:
     adversary_vertex(permutation *p, MEMORY m) {
         perm = *p;
         mem = m;
-        id = lexindex_quadratic(&perm) * (ALGORITHM::max_memory + 1) + mem.data;
+        id = lexindex_quadratic(&perm) * (MEMORY::max + 1) + mem.data;
     }
 
     inline int position(short item) const {
@@ -109,7 +109,7 @@ public:
             swap(&single_swap, opt_swap);
 
             permutation perm_copy(perm);
-            MEMORY mem_copy = recompute_memory(mem, &single_swap);
+            MEMORY mem_copy = mem.recompute(&single_swap);
             recompute_alg_perm(&perm_copy, &single_swap);
             adversary_vertex *target = g.get_vert(&perm_copy, mem_copy);
             auto *edge = new adv_outedge(g.edgecounter++, this, target, opt_swap);
@@ -122,7 +122,7 @@ public:
 
         fprintf(f, "%lu [label=\"%lu,", id, mem.data);
         print_permutation(&perm, f, false);
-        fprintf(f, "\";\n");
+        fprintf(f, "\"];\n");
 
     }
 
@@ -138,7 +138,7 @@ public:
 
 void adv_outedge::print(FILE* f) {
     if (presented_item == -1) {
-        fprintf(f, "%lu -> %lu [label=\"swap %d,%d\";\n", from->id, to->id, opt_swap, opt_swap+1);
+        fprintf(f, "%lu -> %lu [label=\"swap %d,%d\"];\n", from->id, to->id, opt_swap, opt_swap+1);
     } else {
         fprintf(f, "%lu -> %lu [label=\"req: %d, a_cost: %Lf, o_cost: %Lf\"];\n", from->id, to->id, presented_item,
                 alg_cost, opt_cost);
@@ -153,8 +153,8 @@ void add_vertex_to_graph(permutation *perm, MEMORY m) {
 
 
 adversary_vertex* graph::get_vert(long int id) {
-        uint64_t memory_section = id % (ALGORITHM::max_memory + 1);
-        uint64_t permutation_section = id / (ALGORITHM::max_memory + 1);
+        uint64_t memory_section = id % (MEMORY::max + 1);
+        uint64_t permutation_section = id / (MEMORY::max + 1);
         assert((long int) verts[permutation_section][memory_section]->id == id);
         return verts[permutation_section][memory_section];
 }
@@ -180,9 +180,6 @@ void print_graph(FILE *f) {
         }
     }
 }
-
-constexpr long double RATIO = 3.6667;
-#define EDGE_WEIGHT edge_weight_param
 
 cost_t edge_weight_param(adv_outedge *e) {
     return ((cost_t) RATIO)*e->opt_cost - e->alg_cost;
@@ -210,109 +207,13 @@ void print_vertex_sequence(std::vector<long int> seq) {
         fprintf(stderr, "Vertex %d/%zu:\n", counter, seq.size());
         adversary_vertex *v = g.get_vert(seq[counter]);
         v->print(stderr);
-        print_memory_info(v->mem);
+        fprintf(stderr, "Memory content for vertex %d/%zu: ", counter, seq.size());
+        v->mem.full_print();
+        fprintf(stderr, "\n");
         if (counter < seq.size() - 1) {
             adversary_vertex *vnext = g.get_vert(seq[counter+1]);
             adv_outedge *e = locate_edge(v, vnext);
             e->print(stderr);
         }
     }
-}
-
-void bellman_ford() {
-    long unsigned int n = factorial(LISTSIZE)*(ALGORITHM::max_memory + 1);
-    fprintf(stderr, "There are %ld vertices in the graph.\n", n);
-
-    cost_t *distances;
-    long int *pred;
-
-    distances = (cost_t*) malloc(n*sizeof(cost_t));
-    pred = (long int*) malloc(n*sizeof(long int));
-
-    for (long unsigned int i = 0; i < n; i ++) {
-        distances[i] = (cost_t) INT64_MAX;
-        pred[i] = -1;
-    }
-
-    distances[0] = 0;
-    pred[0] = 0;
-
-    for (int iteration = 0; iteration < n; iteration++) {
-        fprintf(stderr, "Iteration %d.\n", iteration);
-        bool update_happened = false;
-        // For every edge means going through all vertices once more and listing the edges there.
-        for (int i = 0; i < g.verts.size(); i++) {
-            for (int j = 0; j < g.verts[i].size(); j++) {
-                for (auto edge: g.verts[i][j]->edgelist) {
-                    long unsigned int from = edge->from->id;
-                    long unsigned int to = edge->to->id;
-                    cost_t weight = EDGE_WEIGHT(edge);
-                    if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
-                        distances[to] = distances[from] + weight;
-                        pred[to] = (long int) from;
-                        update_happened = true;
-                    }
-                }
-            }
-        }
-
-        if (!update_happened) {
-            break;
-        }
-    }
-
-    // Test for negative cycles.
-    // bool negative_cycle_found = false;
-
-    /*
-    fprintf(stderr, "[");
-    for (long int x = 0; x < n; x++) {
-        fprintf(stderr, "%ld,", distances[x]);
-    }
-         fprintf(stderr, "]\n");
-
-     */
-
-    for (int i = 0; i < g.verts.size(); i++) {
-        for (int j = 0; j < g.verts[i].size(); j++) {
-            for (auto edge: g.verts[i][j]->edgelist) {
-                long unsigned int from = edge->from->id;
-                long unsigned int to = edge->to->id;
-                cost_t weight = EDGE_WEIGHT(edge);
-                if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
-                    // negative_cycle_found = true;
-                    fprintf(stderr, "Negative cycle found in the graph. Relevant vertex with distance value %Lf:\n",
-                            distances[from]);
-                    edge->from->print(stderr);
-                    fprintf(stderr, "Relevant vertex to with distance value %Lf:\n", distances[to]);
-                    edge->to->print(stderr);
-                    fprintf(stderr, "pred[from] = %ld.\n", pred[from]);
-
-                    // Build the negative cycle.
-                    std::vector<long int> cycle;
-                    std::unordered_set<long int> visited;
-
-                    cycle.push_back((long int) from);
-                    visited.insert((long int) from);
-                    long int p = pred[from];
-                    while(!visited.contains(p)) {
-                        cycle.push_back(p);
-                        visited.insert(p);
-                        p = pred[p];
-                    }
-                    cycle.push_back(p);
-                    fprintf(stderr, "One negative sequence (cycle with tail) has length %zu.\n", cycle.size());
-		    std::reverse(cycle.begin(), cycle.end());
-                    print_vertex_sequence(cycle);
-
-                    free(pred);
-                    free(distances);
-                    return;
-                }
-            }
-        }
-    }
-    fprintf(stderr, "No negative cycles present.\n");
-    free(pred);
-    free(distances);
 }
