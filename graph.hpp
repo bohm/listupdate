@@ -10,6 +10,7 @@
 #include "memory_pairs.hpp"
 #include "permutations.hpp"
 #include "algorithm.hpp"
+#include "implicit_graph.hpp"
 
 class adversary_vertex;
 
@@ -100,6 +101,11 @@ public:
             adversary_vertex *target = g.get_vert(&perm_copy, mem_copy);
             auto *edge = new adv_outedge(g.edgecounter++, this, target, item, alg_cost, opt_cost);
             edgelist.push_back(edge);
+
+
+            // These are purely for testing purposes. We should move them elsewhere ultimately.
+            // auto [targid, cost] = implicit_graph::presentation_edge(perm, mem, item);
+            // assert(targid == target->id && cost == EDGE_WEIGHT(opt_cost, alg_cost));
         }
     }
 
@@ -114,6 +120,10 @@ public:
             adversary_vertex *target = g.get_vert(&perm_copy, mem_copy);
             auto *edge = new adv_outedge(g.edgecounter++, this, target, opt_swap);
             edgelist.push_back(edge);
+
+            // These are purely for testing purposes. We should move them elsewhere ultimately.
+            // auto [targid, cost] = implicit_graph::translation_edge(perm, mem, opt_swap);
+            // assert(targid == target->id && cost == EDGE_WEIGHT(1, 0));
         }
     }
 
@@ -182,16 +192,9 @@ void print_graph(FILE *f) {
 }
 
 cost_t edge_weight_param(adv_outedge *e) {
-    return ((cost_t) RATIO)*e->opt_cost - e->alg_cost;
+    return edge_weight_param(e->opt_cost, e->alg_cost);
 }
 
-cost_t edge_weight_three(adv_outedge *e) {
-    return ((cost_t) 3) *e->opt_cost - e->alg_cost;
-}
-
-cost_t edge_weight_four(adv_outedge *e) {
-    return ((cost_t) 4) *e->opt_cost - e->alg_cost;
-}
 
 adv_outedge * locate_edge(adversary_vertex *from, adversary_vertex *to) {
     for (auto e: from->edgelist) {

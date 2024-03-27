@@ -11,4 +11,7 @@ add_executable(listupdate
         graph.hpp
         algorithm.hpp
         bellman_ford.hpp
-        memory_bitfield.hpp)
+        memory_bitfield.hpp
+        implicit_graph.hpp
+        implicit_bellman_ford.hpp)
+add_executable(permutation_test permutation_test.cpp)

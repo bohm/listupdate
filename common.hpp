@@ -4,19 +4,22 @@
 // using cost_t = long int;
 using cost_t = long double;
 
-constexpr unsigned short LISTSIZE = 4;
+constexpr unsigned short LISTSIZE = 5;
 
-// #define MEMORY memory_pairs
-// #define ALG_SINGLE_STEP alg_single_step_original
+#define MEMORY memory_pairs
+#define ALG_SINGLE_STEP alg_single_step_original
 
-#define MEMORY memory_bitfield
-#define ALG_SINGLE_STEP alg_single_step_bitfield
+// #define MEMORY memory_bitfield
+// #define ALG_SINGLE_STEP alg_single_step_bitfield
 
 
-// constexpr long double RATIO = 3.6667;
-constexpr long double RATIO = 3.85;
+constexpr long double RATIO = 3.6667;
 #define EDGE_WEIGHT edge_weight_param
 
+
+cost_t edge_weight_param(cost_t opt_cost, cost_t alg_cost) {
+    return ((cost_t) RATIO)*opt_cost - alg_cost;
+}
 
 using permutation = std::array<short, LISTSIZE>;
 

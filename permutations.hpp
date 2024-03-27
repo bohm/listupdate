@@ -136,6 +136,39 @@ uint64_t lexindex_quadratic(permutation *perm) {
     return ret;
 }
 
+permutation perm_from_index_quadratic(uint64_t index) {
+    permutation ret;
+
+    std::array<bool, LISTSIZE> placed{};
+
+    for (int i = 0; i < LISTSIZE; i++) {
+        short relpos = (short) (index / factorial(LISTSIZE-i-1));
+        // fprintf(stderr, "Iteration %d: Computer relpos %hd.\n", i, relpos);
+        short candidate = 0;
+        // Compute the i-th unplaced number.
+        while (true) {
+            if (relpos == 0 && !placed[candidate]) {
+                break;
+            }
+
+            if (!placed[candidate]) {
+                relpos--;
+            }
+            candidate++;
+        }
+
+        // assert(candidate >= 0 && candidate < LISTSIZE && !placed[candidate]);
+        // fprintf(stderr, "Iteration %d: Placing digit %hd.\n", i, candidate);
+
+        ret[i] = candidate;
+        placed[candidate] = true;
+
+        index %= factorial(LISTSIZE-i-1);
+    }
+
+    return ret;
+}
+
 // Performs a trivial swap.
 void swap(permutation *perm, int swap_target) {
     // Allow for no-ops.

@@ -16,7 +16,7 @@ int main(void) {
     m.flag_sorted_pair(2,3);
     m.flag_sorted_pair(1,3);
     m.flag_sorted_pair(0,1);
-    print_memory_info(m);
+    m.full_print();
 
 
     // Suppose ALG goes from 3 1 2 0 after relabeling to 0 2 3 1.
@@ -27,8 +27,8 @@ int main(void) {
 
     permutation test_inverse = {1,2,3,0};
 
-    memory_pairs m2 = recompute_memory(m, &test_inverse);
-    print_memory_info(m2);
+    memory_pairs m2 = m.recompute(&test_inverse);
+    m2.full_print();
     fprintf(stderr, "---\n");
 
     permutation inv_test_p = {3,1,2,0};
@@ -45,7 +45,7 @@ int main(void) {
     swap(&opt_p, opt_position_swap);
 
     recompute_alg_perm(&inv_test_p, &opt_p);
-    memory_pairs inv_test_m2 = recompute_memory(inv_test_m, &opt_p);
+    memory_pairs inv_test_m2 = inv_test_m.recompute(&opt_p);
     print_permutation_and_memory(&inv_test_p, inv_test_m2);
     fprintf(stderr, "---\n");
 
@@ -55,18 +55,28 @@ int main(void) {
 
     // ---
 
-    permutation p1 = {0, 1, 2, 3};
-    permutation p2 = {0, 3, 2 ,1};
-    permutation p3 = {2, 0, 3, 1};
-    permutation p4 = {3, 2, 1, 0};
+    std::array<permutation, 4> perms;
+    perms[0] = {0, 1, 2, 3};
+    perms[1] = {0, 3, 2 ,1};
+    perms[2] = {2, 0, 3, 1};
+    perms[3] = {3, 2, 1, 0};
 
     fprintf(stderr, "Lexindex of p1, p2, p3, p4: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
-            lexindex_quadratic(&p1), lexindex_quadratic(&p2), lexindex_quadratic(&p3), lexindex_quadratic(&p4) );
+            lexindex_quadratic(&perms[0]), lexindex_quadratic(&perms[1]), lexindex_quadratic(&perms[2]),
+            lexindex_quadratic(&perms[3]) );
 
     permutation swaptest = {2, 0, 3 ,1};
 
     swap(&swaptest, 1);
     print_permutation(&swaptest);
+
+    fprintf(stderr, "---\n");
+    
+    for (int i = 0; i < perms.size(); i++ )
+    {
+        permutation from_index = perm_from_index_quadratic(lexindex_quadratic(&perms[i]));
+        print_permutation(&from_index);
+    }
 
     return 0;
 

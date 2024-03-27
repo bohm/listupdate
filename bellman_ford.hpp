@@ -4,18 +4,19 @@
 #include "common.hpp"
 #include "permutations.hpp"
 #include "graph.hpp"
+#include "implicit_graph.hpp"
 
 void bellman_ford() {
-    long unsigned int n = factorial(LISTSIZE)*(MEMORY::max + 1);
+    long unsigned int n = factorial(LISTSIZE) * (MEMORY::max + 1);
     fprintf(stderr, "There are %ld vertices in the graph.\n", n);
 
     cost_t *distances;
     long int *pred;
 
-    distances = (cost_t*) malloc(n*sizeof(cost_t));
-    pred = (long int*) malloc(n*sizeof(long int));
+    distances = (cost_t *) malloc(n * sizeof(cost_t));
+    pred = (long int *) malloc(n * sizeof(long int));
 
-    for (long unsigned int i = 0; i < n; i ++) {
+    for (long unsigned int i = 0; i < n; i++) {
         distances[i] = (cost_t) INT64_MAX;
         pred[i] = -1;
     }
@@ -81,7 +82,7 @@ void bellman_ford() {
                     cycle.push_back((long int) from);
                     visited.insert((long int) from);
                     long int p = pred[from];
-                    while(!visited.contains(p)) {
+                    while (!visited.contains(p)) {
                         cycle.push_back(p);
                         visited.insert(p);
                         p = pred[p];
