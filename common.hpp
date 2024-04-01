@@ -1,8 +1,10 @@
 #pragma once
 #include <array>
+#include <cstdint>
 
 // using cost_t = long int;
-using cost_t = long double;
+// using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
+using cost_t = float; // If memory is an issue, you can use this.
 
 constexpr unsigned short LISTSIZE = 5;
 
@@ -13,7 +15,8 @@ constexpr unsigned short LISTSIZE = 5;
 // #define ALG_SINGLE_STEP alg_single_step_bitfield
 
 
-constexpr long double RATIO = 3.6667;
+// constexpr long double RATIO = 3.6667;
+constexpr long double RATIO = 3.6;;
 #define EDGE_WEIGHT edge_weight_param
 
 

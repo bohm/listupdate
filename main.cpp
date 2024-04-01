@@ -1,4 +1,3 @@
-#include "graph.hpp"
 #include "implicit_bellman_ford.hpp"
 
 int main(void) {
@@ -15,6 +14,8 @@ int main(void) {
     // bellman_ford();
     // fprintf(stderr, "---\n");
     fprintf(stderr, "Implicit computation:\n");
-    bellman_ford_implicit();
+    // bellman_ford_implicit();
+    sum_of_negative_edges();
+    bellman_ford_implicit_parallel();
     return 0;
 }
