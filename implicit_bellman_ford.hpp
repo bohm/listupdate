@@ -228,11 +228,6 @@ void bellman_ford_compare_exchange() {
     fprintf(stderr, "There are %ld vertices in the graph.\n", n);
 
     std::atomic<cost_t> *distances;
-    omp_lock_t locks[1024 * 1024];
-    for (int i = 0; i < 1024 * 1024; i++) {
-        omp_init_lock(&(locks[i]));
-    }
-
     distances = new std::atomic<cost_t>[n];
     // The predecessor code is not implemented for the implicit version. This is unfortunate,
     // but gives out large memory savings.
@@ -270,7 +265,7 @@ void bellman_ford_compare_exchange() {
                     }
 
                     while (dist_from + weight < dist_to) {
-                        distances[to].compare_exchange_strong(dist_to, dist_from + weight);
+                        distances[to].compare_exchange_weak(dist_to, dist_from + weight);
                         // dist_to = distances[to].load(std::memory_order_relaxed);
                     }
                 }
@@ -287,7 +282,7 @@ void bellman_ford_compare_exchange() {
                     }
 
                     while (dist_from + weight < dist_to) {
-                        distances[to].compare_exchange_strong(dist_to, dist_from + weight);
+                        distances[to].compare_exchange_weak(dist_to, dist_from + weight);
                         // dist_to = distances[to].load(std::memory_order_relaxed);
                     }
                 }
