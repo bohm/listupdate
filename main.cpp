@@ -17,5 +17,8 @@ int main(void) {
     // bellman_ford_implicit();
     // bellman_ford_implicit_parallel();
     bellman_ford_compare_exchange();
+    // auto [distances_len, distances] = read_distance_array();
+    // print_array(distances_len, distances);
+    // delete distances;
     return 0;
 }

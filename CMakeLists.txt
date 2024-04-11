@@ -13,7 +13,8 @@ add_executable(listupdate
         bellman_ford.hpp
         memory_bitfield.hpp
         implicit_graph.hpp
-        implicit_bellman_ford.hpp)
+        implicit_bellman_ford.hpp
+        storage.hpp)
 add_executable(permutation_test permutation_test.cpp)
 
 find_package(OpenMP)

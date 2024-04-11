@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <cstdio>
 
 // using cost_t = long int;
 // using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
@@ -40,3 +41,12 @@ constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_ordering() {
 constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_order = canonical_ordering();
 
 constexpr uint64_t max_memory_pairs = (1LLU << (canonical_order[(LISTSIZE - 2) * LISTSIZE + (LISTSIZE - 1)] + 1)) - 1;
+
+
+void print_array(unsigned long int len, cost_t *array) {
+    fprintf(stderr, "[");
+    for (long int x = 0; x < len; x++) {
+        fprintf(stderr, "%f,", array[x]);
+    }
+    fprintf(stderr, "]\n");
+}
