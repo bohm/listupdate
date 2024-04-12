@@ -82,6 +82,7 @@ void bellman_ford_compare_exchange() {
             fprintf(stderr, "Negative cycle found in the graph.\n");
             // print_array(n, reinterpret_cast<cost_t *>(distances));
             write_distance_array(reinterpret_cast<cost_t *>(distances), n);
+            implicit_graph::print_negative_cycle(n, reinterpret_cast<cost_t *>(distances));
             return;
         }
     }
@@ -117,5 +118,6 @@ void bellman_ford_compare_exchange() {
     fprintf(stderr, "No negative cycles present.\n");
     // print_array(n, reinterpret_cast<cost_t *>(distances));
     write_distance_array(reinterpret_cast<cost_t *>(distances), n);
+
     delete distances;
 }

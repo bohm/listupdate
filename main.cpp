@@ -20,5 +20,6 @@ int main(void) {
     // auto [distances_len, distances] = read_distance_array();
     // print_array(distances_len, distances);
     // delete distances;
+
     return 0;
 }
