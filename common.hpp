@@ -15,7 +15,7 @@ constexpr unsigned short LISTSIZE = 4;
 // #define MEMORY memory_bitfield
 // #define ALG_SINGLE_STEP alg_single_step_bitfield
 
-
+constexpr float EPSILON = 0.0001;
 // constexpr long double RATIO = 3.6667;
 constexpr long double RATIO = 3.6;
 #define EDGE_WEIGHT edge_weight_param

@@ -2,6 +2,7 @@
 #include <vector>
 #include <unordered_set>
 #include <algorithm>
+#include <cmath>
 
 #include "common.hpp"
 #include "algorithm.hpp"
@@ -60,6 +61,41 @@ public:
         return false;
     }
 
+    static void print_pre_neighborhood(long int distances_size, cost_t *distances, long int vertex) {
+        cost_t distance_v = distances[vertex];
+
+        for (long int parent_cand = 0; parent_cand < distances_size; parent_cand++) {
+            if (parent_cand == vertex) {
+                continue;
+            }
+
+            auto [v_perm, v_mem] = get_vertex_information(parent_cand);
+            // Presentation edge check.
+            for (int j = 0; j < LISTSIZE; j++) {
+                auto [to, weight] = implicit_graph::presentation_edge(v_perm, v_mem, j);
+                if (to == vertex) {
+                    fprintf(stderr, "The predecessor of %ld is %ld.\n", vertex, parent_cand);
+                    fprintf(stderr, "The edge weight is %f.\n", weight);
+                    fprintf(stderr, "Distances of the two is %f and %f with difference %f.\n",
+                            distance_v, distances[parent_cand],
+                            fabsf(distance_v - distances[parent_cand] - weight));
+                }
+            }
+
+            // Translation edge check.
+            for (int j = 0; j < LISTSIZE - 1; j++) {
+                auto [to, weight] = implicit_graph::translation_edge(v_perm, v_mem, j);
+                if (to == vertex) {
+                    fprintf(stderr, "The predecessor of %ld is %ld.\n", vertex, parent_cand);
+                    fprintf(stderr, "The edge weight is %f.\n", weight);
+                    fprintf(stderr, "Distances of the two is %f and %f with difference %f.\n",
+                            distance_v, distances[parent_cand],
+                            fabsf(distance_v - distances[parent_cand] - weight));
+                }
+            }
+        }
+    }
+
     static long int linear_time_predecessor(long int distances_size, cost_t *distances, long int vertex) {
         cost_t distance_v = distances[vertex];
         for (long int parent_cand = 0; parent_cand < distances_size; parent_cand++) {
@@ -71,7 +107,8 @@ public:
             for (int j = 0; j < LISTSIZE; j++) {
                 auto [to, weight] = implicit_graph::presentation_edge(v_perm, v_mem, j);
                 if (to == vertex) {
-                    if (distance_v == distances[parent_cand] + weight) {
+                    if (fabsf(distance_v - distances[parent_cand] - weight) < EPSILON) {
+                        fprintf(stderr, "The predecessor of %ld is %ld.\n", vertex, parent_cand);
                         return parent_cand;
                     }
                 }
@@ -81,13 +118,14 @@ public:
             for (int j = 0; j < LISTSIZE - 1; j++) {
                 auto [to, weight] = implicit_graph::translation_edge(v_perm, v_mem, j);
                 if (to == vertex) {
-                    if (distance_v == distances[parent_cand] + weight) {
+                    if (fabsf(distance_v - distances[parent_cand] - weight) < EPSILON) {
+                        fprintf(stderr, "The predecessor of %ld is %ld.\n", vertex, parent_cand);
                         return parent_cand;
                     }
                 }
             }
         }
-
+        fprintf(stderr, "No candidate of a predecessor of %ld found.\n", vertex);
         return -1;
     }
 
@@ -148,9 +186,12 @@ public:
 
         cycle.push_back((long int) from);
         visited.insert((long int) from);
+        print_pre_neighborhood(distances_size, distances, from);
+
         long int p = linear_time_predecessor(distances_size, distances, from);
         while (!visited.contains(p)) {
             cycle.push_back(p);
+            print_pre_neighborhood(distances_size, distances, p);
             visited.insert(p);
             p = linear_time_predecessor(distances_size, distances, p);
         }
