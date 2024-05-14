@@ -25,7 +25,7 @@ void bellman_ford() {
     pred[0] = 0;
 
     for (int iteration = 0; iteration < n; iteration++) {
-        // fprintf(stderr, "Iteration %d.\n", iteration);
+        fprintf(stderr, "Iteration %d.\n", iteration);
         bool update_happened = false;
         // For every edge means going through all vertices once more and listing the edges there.
         for (int i = 0; i < g.verts.size(); i++) {
@@ -44,6 +44,14 @@ void bellman_ford() {
         }
 
         if (!update_happened) {
+            fprintf(stderr, "No negative cycles present.\n");
+            free(pred);
+            free(distances);
+            return;
+        }
+
+        if (distances[0] < 0.0) {
+            fprintf(stderr, "Negative cycle found in the graph.\n");
             break;
         }
     }

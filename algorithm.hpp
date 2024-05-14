@@ -118,3 +118,61 @@ int alg_single_step_original(permutation *perm, memory_pairs *mem, unsigned shor
     }
     return alg_cost;
 }
+
+
+
+// Returns ALG's cost and may edit both permutation and memory.
+int alg_single_step_xoror(permutation *perm, memory_pairs *mem, unsigned short presented_item) {
+    int alg_cost = 0;
+    int item_pos = 0;
+    int target_item_pos = -1;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            // if there was no item with bit 0 before presented_item, we will not move.
+            if (target_item_pos == -1) {
+                target_item_pos = item_pos;
+            }
+            break;
+        } else {
+            // Set target_item_pos to the first position from the left which has a bit value 0.
+            if (target_item_pos == -1) {
+                uint64_t bit = mem->access_pair((*perm)[item_pos], presented_item);
+                if (bit == 0) {
+                    target_item_pos = item_pos;
+                }
+            }
+        }
+    }
+
+    alg_cost += item_pos;
+
+    // bits before j get XORed, bits after j get set to 1 (ORed).
+    for (int j = 0; j < LISTSIZE; j++) {
+        if (j < item_pos) {
+            uint64_t bit = mem->access_pair((*perm)[item_pos], (*perm)[j]);
+            if (bit == 1) {
+                mem->clear_unsorted_pair((*perm)[item_pos], (*perm)[j]);
+            } else {
+                mem->flag_unsorted_pair((*perm)[item_pos], (*perm)[j]);
+            }
+        }
+
+        if (j == item_pos) {
+            continue;
+        }
+
+        if (j > item_pos) {
+            mem->flag_unsorted_pair((*perm)[item_pos], (*perm)[j]);
+        }
+    }
+
+    // Swap presented_item from item_pos to the left to target_item_pos.
+
+    while(item_pos - target_item_pos > 0) {
+        swap(perm, item_pos-1);
+        alg_cost++;
+        item_pos--;
+    }
+
+    return alg_cost;
+}
