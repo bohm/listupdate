@@ -150,7 +150,7 @@ void adv_outedge::print(FILE* f) {
     if (presented_item == -1) {
         fprintf(f, "%lu -> %lu [label=\"swap %d,%d\"];\n", from->id, to->id, opt_swap, opt_swap+1);
     } else {
-        fprintf(f, "%lu -> %lu [label=\"req: %d, a_cost: %Lf, o_cost: %Lf\"];\n", from->id, to->id, presented_item,
+        fprintf(f, "%lu -> %lu [label=\"req: %d, a_cost: %f, o_cost: %f\"];\n", from->id, to->id, presented_item,
                 alg_cost, opt_cost);
     }
 
@@ -210,7 +210,7 @@ void print_vertex_sequence(std::vector<long int> seq) {
         fprintf(stderr, "Vertex %d/%zu:\n", counter, seq.size());
         adversary_vertex *v = g.get_vert(seq[counter]);
         v->print(stderr);
-        fprintf(stderr, "Memory content for vertex %d/%zu: ", counter, seq.size());
+        fprintf(stderr, "Memory content for vertex %d/%zu:\n", counter, seq.size());
         v->mem.full_print();
         fprintf(stderr, "\n");
         if (counter < seq.size() - 1) {

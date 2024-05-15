@@ -14,7 +14,7 @@ int main(void) {
 
     bellman_ford();
     // fprintf(stderr, "---\n");
-    fprintf(stderr, "Implicit computation:\n");
+    // fprintf(stderr, "Implicit computation:\n");
     // bellman_ford_implicit();
     // bellman_ford_implicit_parallel();
     // bellman_ford_compare_exchange();
