@@ -4,6 +4,7 @@
 int main(void) {
     // FILE *f = fopen("cmake-build-debug/graphdump.dot", "w");
     create_graph();
+    g.dfs_reachability();
 
     // long int random_number=1202;
     // auto v = g.get_vert(random_number);

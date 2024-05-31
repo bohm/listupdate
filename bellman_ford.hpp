@@ -6,10 +6,15 @@
 #include "graph.hpp"
 #include "implicit_graph.hpp"
 
+
+// Note: Bellman for now has a reachability clause. This only makes sense if reachability is computed
+// and would slow us down if everything is reachable.
+
 void bellman_ford() {
     long unsigned int n = factorial(LISTSIZE) * (MEMORY::max + 1);
     fprintf(stderr, "There are %ld vertices in the graph.\n", n);
-
+    // long unsigned iteration_limit = n;
+    long unsigned iteration_limit = g.reachable_vertices;
     cost_t *distances;
     long int *pred;
 
@@ -24,12 +29,16 @@ void bellman_ford() {
     distances[0] = 0;
     pred[0] = 0;
 
-    for (int iteration = 0; iteration < n; iteration++) {
+    for (int iteration = 0; iteration < iteration_limit; iteration++) {
         fprintf(stderr, "Iteration %d.\n", iteration);
         bool update_happened = false;
         // For every edge means going through all vertices once more and listing the edges there.
         for (int i = 0; i < g.verts.size(); i++) {
             for (int j = 0; j < g.verts[i].size(); j++) {
+                if (!g.verts[i][j]->reachable) {
+                    continue;
+                }
+
                 for (auto edge: g.verts[i][j]->edgelist) {
                     long unsigned int from = edge->from->id;
                     long unsigned int to = edge->to->id;
@@ -70,16 +79,20 @@ void bellman_ford() {
 
     for (int i = 0; i < g.verts.size(); i++) {
         for (int j = 0; j < g.verts[i].size(); j++) {
+            if (!g.verts[i][j]->reachable) {
+                continue;
+            }
+
             for (auto edge: g.verts[i][j]->edgelist) {
                 long unsigned int from = edge->from->id;
                 long unsigned int to = edge->to->id;
                 cost_t weight = EDGE_WEIGHT(edge);
                 if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
                     // negative_cycle_found = true;
-                    fprintf(stderr, "Negative cycle found in the graph. Relevant vertex with distance value %Lf:\n",
+                    fprintf(stderr, "Negative cycle found in the graph. Relevant vertex with distance value %f:\n",
                             distances[from]);
                     edge->from->print(stderr);
-                    fprintf(stderr, "Relevant vertex to with distance value %Lf:\n", distances[to]);
+                    fprintf(stderr, "Relevant vertex to with distance value %f:\n", distances[to]);
                     edge->to->print(stderr);
                     fprintf(stderr, "pred[from] = %ld.\n", pred[from]);
 

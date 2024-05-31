@@ -7,7 +7,7 @@
 // using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
 using cost_t = float; // If memory is an issue, you can use this.
 
-constexpr unsigned short LISTSIZE = 4;
+constexpr unsigned short LISTSIZE = 6;
 
 #define MEMORY memory_pairs
 #define ALG_SINGLE_STEP alg_single_step_xoror
@@ -17,7 +17,7 @@ constexpr unsigned short LISTSIZE = 4;
 
 constexpr float EPSILON = 0.0001;
 // constexpr long double RATIO = 3.6667;
-constexpr long double RATIO = 3.15;
+constexpr long double RATIO = 3.4;
 #define EDGE_WEIGHT edge_weight_param
 
 

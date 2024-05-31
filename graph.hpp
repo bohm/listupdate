@@ -21,6 +21,7 @@ class graph;
 class graph {
 public:
     uint64_t edgecounter = 0;
+    uint64_t reachable_vertices = 0;
     std::array<vert_container, factorial(LISTSIZE)> verts;
 
     adversary_vertex *get_vert(permutation *perm, MEMORY m) const
@@ -30,6 +31,9 @@ public:
 
     adversary_vertex *get_vert(long int id);
 
+    void dfs_reachability();
+    void reachability_recursive(adversary_vertex *v);
+    void reachability_nonrecursive(adversary_vertex *start);
 };
 
 graph g;
@@ -66,6 +70,7 @@ public:
     }
 
     void print(FILE *f);
+
 };
 
 // A vertex before OPT presents an item.
@@ -75,6 +80,7 @@ public:
     permutation perm;
     MEMORY mem;
     std::vector<adv_outedge*> edgelist = {};
+    bool reachable = false;
 
 
     adversary_vertex(permutation *p, MEMORY m) {
@@ -217,6 +223,43 @@ void print_vertex_sequence(std::vector<long int> seq) {
             adversary_vertex *vnext = g.get_vert(seq[counter+1]);
             adv_outedge *e = locate_edge(v, vnext);
             e->print(stderr);
+        }
+    }
+}
+
+void graph::dfs_reachability() {
+    // reachability_recursive(get_vert(0));
+    reachability_nonrecursive(get_vert(0));
+    fprintf(stderr, "Graph: %" PRIu64 " vertices were reachable.\n", reachable_vertices);
+}
+
+void graph::reachability_nonrecursive(adversary_vertex *start) {
+    std::unordered_set<adversary_vertex*> set;
+    std::unordered_set<adversary_vertex*> visited;
+    set.insert(start);
+
+    while(!set.empty()) {
+        adversary_vertex* v = *(set.begin());
+        set.erase(v);
+        v->reachable = true;
+        reachable_vertices++;
+        visited.insert(v);
+        for (auto& e: v->edgelist) {
+            if (!visited.contains(e->to)) {
+                set.insert(e->to);
+            }
+        }
+    }
+}
+
+void graph::reachability_recursive(adversary_vertex *v) {
+    if (v->reachable) {
+        return;
+    } else {
+        v->reachable = true;
+        reachable_vertices++;
+        for (auto& e: v->edgelist) {
+            reachability_recursive(e->to);
         }
     }
 }
