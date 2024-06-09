@@ -14,10 +14,12 @@ add_executable(listupdate
         memory_bitfield.hpp
         implicit_graph.hpp
         implicit_bellman_ford.hpp
-        storage.hpp)
+        storage.hpp
+        wf_manager.hpp)
 add_executable(permutation_test permutation_test.cpp)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(listupdate PUBLIC OpenMP::OpenMP_CXX)
 endif()
+add_executable(workfunction workfunction.cpp)
