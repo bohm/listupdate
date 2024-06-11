@@ -1,5 +1,6 @@
 #pragma once
 
+#include <omp.h>
 #include "wf_manager.hpp"
 
 template <short SIZE> class game_graph {
@@ -70,10 +71,7 @@ public:
     }
 
     short adv_cost(unsigned int wf_index, short req) {
-        workfunction<SIZE> rel_wf = wf.reachable_wfs[wf_index];
-        wf.flat_update(&rel_wf, req);
-        short minimum = rel_wf.min();
-        return RATIO*minimum;
+        return RATIO*wf.update_cost(wf_index, req);
     }
 
     short alg_cost(unsigned int perm_index_one, unsigned int perm_index_two, short req) {
@@ -103,13 +101,7 @@ public:
             workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
             short new_pot = std::numeric_limits<short>::min();
             for (int r = 0; r < SIZE; r++) {
-                // Compute the new work function.
-                workfunction<SIZE> new_wf = wf_before_move;
-                wf.flat_update(&new_wf, r);
-                wf.cut_minimum(&new_wf);
-                wf.dynamic_update(&new_wf);
-                // new_wf.validate();
-                uint64_t new_wf_index = wf.hash_to_index[wf.hash(&new_wf)];
+                uint64_t new_wf_index = wf.adjacency(wf_index, r);
                 uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
                 short adv_cost_s = adv_cost(wf_index, r);
                 if(GRAPH_DEBUG) {

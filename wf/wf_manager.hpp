@@ -20,6 +20,8 @@ public:
     std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial(SIZE)> zobrist;
 
     std::vector<workfunction<SIZE>> reachable_wfs;
+    std::vector<std::array<unsigned int, SIZE>> adjacent_functions;
+    std::vector<std::array<short, SIZE>> min_update_costs;
     std::unordered_map<uint64_t, unsigned int> hash_to_index;
     wf_manager(perm_manager<SIZE> &p) : pm(p) {
 
@@ -74,8 +76,30 @@ public:
         }
     }
 
+    // Old version.
+
+    uint64_t adjacency_explicit(uint64_t wf_index, short request) {
+        workfunction<SIZE> new_wf = reachable_wfs[wf_index];
+        flat_update(&new_wf, request);
+        cut_minimum(&new_wf);
+        dynamic_update(&new_wf);
+        // new_wf.validate();
+        uint64_t new_wf_index = hash_to_index[hash(&new_wf)];
+        return new_wf_index;
+    }
+
+    uint64_t adjacency(uint64_t wf_index, short request) {
+        return adjacent_functions[wf_index][request];
+    }
+
+    short update_cost(uint64_t wf_index, short request) {
+        return min_update_costs[wf_index][request];
+    }
+
     void initialize_reachable() {
         std::unordered_set<uint64_t> reachable_hashes;
+        std::vector<std::array<uint64_t, SIZE>> adjacencies_by_hash;
+
         workfunction<SIZE> initial = invs;
         std::queue<workfunction<SIZE>> q;
         reachable_hashes.insert(hash(&initial));
@@ -85,22 +109,40 @@ public:
             q.pop();
             hash_to_index[hash(&front)] = reachable_wfs.size();
             reachable_wfs.push_back(front);
+            std::array<uint64_t, SIZE> adj;
+            std::array<short, SIZE> upd_cost;
+
             for (short req = 0; req < SIZE; req++) {
                 workfunction<SIZE> new_wf = front;
                 flat_update(&new_wf, req);
+                upd_cost[req] = new_wf.min();
                 cut_minimum(&new_wf);
                 dynamic_update(&new_wf);
-                new_wf.validate();
+                // new_wf.validate();
 
                 uint64_t h = hash(&new_wf);
+                adj[req] = h;
                 if (!reachable_hashes.contains(h)) {
                     reachable_hashes.insert(h);
                     q.push(new_wf);
                 }
             }
+            adjacencies_by_hash.push_back(adj);
+            min_update_costs.push_back(upd_cost);
         }
-        fprintf(stderr, "Sanity check: set %zu, vector %zu, map %zu.\n", reachable_hashes.size(), reachable_wfs.size(),
-                hash_to_index.size());
+
+        // Recompute adjacencies to refer to indices, not hashes.
+        for (const auto adj_by_hash: adjacencies_by_hash) {
+            std::array<unsigned int, SIZE> adj_by_index;
+            for (int i = 0; i < SIZE; i++) {
+                adj_by_index[i] = hash_to_index[adj_by_hash[i]];
+            }
+            adjacent_functions.push_back(adj_by_index);
+        }
+
+        fprintf(stderr, "Sanity check: set %zu, vector %zu, map %zu, adjacency lists %zu,"
+                        " update costs %zu.\n", reachable_hashes.size(),
+                reachable_wfs.size(), hash_to_index.size(), adjacent_functions.size(), min_update_costs.size());
     }
 
 };
