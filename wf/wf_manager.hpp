@@ -2,21 +2,7 @@
 
 #include <random>
 #include "perm_manager.hpp"
-
-template <int SIZE> class workfunction {
-public:
-    std::array<short, factorial(SIZE)> vals;
-
-    short min() {
-        return (*std::min_element(vals.begin(), vals.end()));
-    }
-
-    void print() const {
-        for (int i = 0; i < factorial(SIZE); i++) {
-            fprintf(stderr, "wf[%d] = %hd.\n", i, vals[i]);
-        }
-    }
-};
+#include "workfunction.hpp"
 
 
 // Mersenne twister.
@@ -33,6 +19,8 @@ public:
 
     std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial(SIZE)> zobrist;
 
+    std::vector<workfunction<SIZE>> reachable_wfs;
+    std::unordered_map<uint64_t, unsigned int> hash_to_index;
     wf_manager(perm_manager<SIZE> &p) : pm(p) {
 
         for (int i = 0; i < factorial(SIZE); i++) {
@@ -40,6 +28,17 @@ public:
                 zobrist[i][v] = rand_64bit();
             }
         }
+
+        initialize_inversions();
+    }
+
+    void initialize_inversions() {
+        invs.vals[0] = 0;
+        for (int i = 1; i < factorial(TESTSIZE); i++) {
+            invs.vals[i] = diameter_bound(TESTSIZE);
+        }
+
+        dynamic_update(&invs);
     }
 
     void flat_update(workfunction<SIZE> *wf, short req) {
@@ -74,4 +73,34 @@ public:
             }
         }
     }
+
+    void initialize_reachable() {
+        std::unordered_set<uint64_t> reachable_hashes;
+        workfunction<SIZE> initial = invs;
+        std::queue<workfunction<SIZE>> q;
+        reachable_hashes.insert(hash(&initial));
+        q.push(initial);
+        while (!q.empty()) {
+            workfunction<SIZE> front = q.front();
+            q.pop();
+            hash_to_index[hash(&front)] = reachable_wfs.size();
+            reachable_wfs.push_back(front);
+            for (short req = 0; req < SIZE; req++) {
+                workfunction<SIZE> new_wf = front;
+                flat_update(&new_wf, req);
+                cut_minimum(&new_wf);
+                dynamic_update(&new_wf);
+                new_wf.validate();
+
+                uint64_t h = hash(&new_wf);
+                if (!reachable_hashes.contains(h)) {
+                    reachable_hashes.insert(h);
+                    q.push(new_wf);
+                }
+            }
+        }
+        fprintf(stderr, "Sanity check: set %zu, vector %zu, map %zu.\n", reachable_hashes.size(), reachable_wfs.size(),
+                hash_to_index.size());
+    }
+
 };
