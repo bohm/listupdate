@@ -45,7 +45,11 @@ int main() {
 
     game_graph<TESTSIZE> g(wm);
     bool anything_updated = true;
+    uint64_t iter_count = 0;
     while(anything_updated) {
+        if (iter_count % 10 == 0) {
+            fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
+        }
         bool adv_updated = g.update_adv();
         bool alg_updated = g.update_alg();
         anything_updated = adv_updated || alg_updated;
@@ -53,6 +57,7 @@ int main() {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
             return 0;
         }
+        iter_count++;
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
