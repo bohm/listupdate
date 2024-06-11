@@ -61,7 +61,7 @@ int alg_single_step_bitfield(permutation *perm, memory_bitfield *mem, unsigned s
 
 
 // Returns ALG's cost and may edit both permutation and memory.
-int alg_single_step_original(permutation *perm, memory_pairs *mem, unsigned short presented_item) {
+int alg_single_step_stars(permutation *perm, memory_pairs *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         print_permutation_and_memory(perm, *mem);

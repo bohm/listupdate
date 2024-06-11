@@ -9,7 +9,7 @@ constexpr short diameter_bound(short n) {
     return (n*(n-1))/2;
 }
 
-#define TSIZE 3
+#define TSIZE 4
 
 constexpr bool GRAPH_DEBUG = false;
 constexpr int TESTSIZE = TSIZE;

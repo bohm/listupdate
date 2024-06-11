@@ -42,7 +42,7 @@ int main() {
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
 
     // The actual deal.
-    
+
     game_graph<TESTSIZE> g(wm);
     bool anything_updated = true;
     while(anything_updated) {

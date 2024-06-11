@@ -92,6 +92,7 @@ public:
 
     bool update_adv() {
         bool any_potential_changed = false;
+#pragma omp parallel for
         for (uint64_t index = 0; index < advsize; index++) {
             auto [wf_index, perm_index] = decode_adv(index);
             if(GRAPH_DEBUG) {
@@ -138,6 +139,7 @@ public:
 
     bool update_alg() {
         bool any_potential_changed = false;
+#pragma omp parallel for
         for (uint64_t index = 0; index < algsize; index++) {
             auto [wf_index, perm_index, req] = decode_alg(index);
             if(GRAPH_DEBUG) {
