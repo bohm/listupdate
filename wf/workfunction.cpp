@@ -51,7 +51,10 @@ int main() {
             fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
         //}
         bool adv_updated = g.update_adv();
-        bool alg_updated = g.update_alg();
+        // bool alg_updated = g.update_alg();
+        //bool alg_updated = g.update_alg_mtf();
+        // bool alg_updated = g.update_alg_single_swap();
+        bool alg_updated = g.update_alg_request_moves_forward();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
@@ -61,5 +64,6 @@ int main() {
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
+    // g.print_potential();
     return 0;
 }

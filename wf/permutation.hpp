@@ -61,6 +61,11 @@ public:
         return copy;
     }
 
+    void swap_inplace(short swap_source) {
+        assert(swap_source >= 0 && swap_source <= SIZE-2);
+        std::swap(data[swap_source], data[swap_source+1]);
+    }
+
     short position(short element) const {
         for (short i = 0; i < SIZE; i++) {
             if (data[i] == element) {
@@ -68,6 +73,22 @@ public:
             }
         }
         return -1;
+    }
+
+
+    permutation<SIZE> move_forward(short element, short target_pos) const {
+        permutation<SIZE> ret(*this);
+        short pos = position(element);
+        while (pos > target_pos) {
+            ret.swap_inplace(pos-1);
+            pos--;
+        }
+        return ret;
+    }
+
+    // Performs move to front.
+    permutation<SIZE> mtf(short element) const {
+        return move_forward(element, 0);
     }
 
     short inversions() const {

@@ -4,6 +4,9 @@
 #include "wf_manager.hpp"
 
 template <short SIZE> class game_graph {
+private:
+    bool *alg_vertices_visited = nullptr;
+    bool *adv_vertices_visited = nullptr;
 public:
     short *alg_vertices = nullptr;
     uint64_t algsize = 0;
@@ -171,4 +174,274 @@ public:
         return any_potential_changed;
     }
 
+
+    bool update_alg_mtf() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++) {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            if(GRAPH_DEBUG) {
+                fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
+                                "%hd.\n",
+                        index, wf_index, perm_index, req);
+
+                print_alg(index);
+            }
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of all choices, we only allow MTF choices.
+            for (short el = 0; el < SIZE; el++) {
+                unsigned long p = wf.pm.all_perms[perm_index].mtf(el).id();
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "alg%lu: Evaluating edge: ", index);
+                    wf.pm.all_perms[perm_index].print(stderr, false);
+                    fprintf(stderr, " -> ");
+                    wf.pm.all_perms[p].print();
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "Phi_y (%hd) + c_xy  (%hd) = %hd.\n",
+                            adv_vertices[target_adv], alg_cost_s, adv_vertices[target_adv] + alg_cost_s);
+                }
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ALG vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, alg_vertices[index], new_pot);
+                }
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
+
+    bool update_alg_request_moves_forward() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++) {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            if(GRAPH_DEBUG) {
+                fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
+                                "%hd.\n",
+                        index, wf_index, perm_index, req);
+
+                print_alg(index);
+            }
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of all choices, we only allow the request to move forward.
+            short request_pos = wf.pm.all_perms[perm_index].position(req);
+            for (short target = 0; target <= request_pos; target++) {
+                unsigned long p = wf.pm.all_perms[perm_index].move_forward(req, target).id();
+
+
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "alg%lu: Evaluating edge: ", index);
+                    wf.pm.all_perms[perm_index].print(stderr, false);
+                    fprintf(stderr, " -> ");
+                    wf.pm.all_perms[p].print();
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "Phi_y (%hd) + c_xy  (%hd) = %hd.\n",
+                            adv_vertices[target_adv], alg_cost_s, adv_vertices[target_adv] + alg_cost_s);
+                }
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ALG vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, alg_vertices[index], new_pot);
+                }
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
+
+    bool update_alg_single_swap() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++) {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            if(GRAPH_DEBUG) {
+                fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
+                                "%hd.\n",
+                        index, wf_index, perm_index, req);
+
+                print_alg(index);
+            }
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of all choices, we only allow single swaps.
+            for (short swap= 0; swap < SIZE; swap++) {
+                unsigned long p = perm_index;
+                if (swap < SIZE-1) {
+                    p = wf.pm.all_perms[perm_index].swap(swap).id();
+                }
+
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "alg%lu: Evaluating edge: ", index);
+                    wf.pm.all_perms[perm_index].print(stderr, false);
+                    fprintf(stderr, " -> ");
+                    wf.pm.all_perms[p].print();
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "Phi_y (%hd) + c_xy  (%hd) = %hd.\n",
+                            adv_vertices[target_adv], alg_cost_s, adv_vertices[target_adv] + alg_cost_s);
+                }
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ALG vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, alg_vertices[index], new_pot);
+                }
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
+
+    /*
+    short conjectured_potential(unsigned long wf_index, unsigned long perm_index) {
+        workfunction<SIZE>& workf = wf.reachable_wfs[wf_index];
+        permutation<SIZE> perm = wf.pm.all_perms[perm_index];
+        short m = std::numeric_limits<short>::min();
+        for (unsigned long p = 0; p < factorial(SIZE); p++) {
+            short inv = perm.inversions_wrt(&(wf.pm.all_perms[p]));
+            if (2*inv - 3*workf.vals[p] > m)
+            {
+                m = 2*inv - 3*workf.vals[p];
+            }
+        }
+        return m;
+    }
+     */
+
+    void print_shortest_path(unsigned long index_adv, const std::vector<short>& shrp) {
+        fprintf(stderr, "adv%lu shortest request path: ", index_adv);
+        for (auto x: shrp) {
+            fprintf(stderr, "%hd, ", x);
+        }
+        fprintf(stderr, "\n");
+    }
+
+    void print_potential() {
+        adv_vertices_visited = new bool[advsize];
+        for (int i = 0; i < advsize; i++) {
+            adv_vertices_visited[i] = false;
+        }
+        alg_vertices_visited = new bool[algsize];
+        for (int j = 0; j < algsize; j++) {
+            alg_vertices_visited[j] = false;
+        }
+
+        std::queue<std::tuple<bool, unsigned long, std::vector<short>>> bfs_q;
+        std::tuple<bool, unsigned long, std::vector<short>> initial{true, 0, std::vector<short>()};
+        bfs_q.emplace(initial);
+        adv_vertices_visited[0] = true;
+        while(!bfs_q.empty()) {
+            auto [adv_vertex, index, shortest_path] = bfs_q.front();
+            bfs_q.pop();
+            if (adv_vertex) {
+                auto [wf_index, perm_index] = decode_adv(index);
+                print_adv(index);
+                // short conp = conjectured_potential(wf_index, perm_index);
+                // fprintf(stderr, "adv%lu: adv potential %hd, marek's conjecture %hd, difference %hd.\n",
+                //        index, adv_vertices[index], conp, conp-adv_vertices[index]);
+                fprintf(stderr, "adv%lu: adv potential %hd.\n", index, adv_vertices[index]);
+                print_shortest_path(index, shortest_path);
+                for (short r = 0; r < SIZE; r++) {
+                    unsigned long next_wf = wf.adjacency(wf_index, r);
+                    unsigned long next_alg_index = encode_alg(next_wf, perm_index, r);
+                    std::vector<short> next_shortest_path(shortest_path);
+                    next_shortest_path.push_back(r);
+                    fprintf(stderr, "adv%lu with req %hd: updated work function number %lu. Next alg%lu.\n",
+                            index, r, next_wf, next_alg_index);
+                    if (!alg_vertices_visited[next_alg_index]) {
+                        alg_vertices_visited[next_alg_index] = true;
+                        bfs_q.emplace(false, next_alg_index, next_shortest_path);
+                    }
+                }
+            } else {
+                auto [wf_index, perm_index, request] = decode_alg(index);
+                print_alg(index);
+                fprintf(stderr, "alg%lu: alg potential %hd.\n", index, alg_vertices[index]);
+
+                // Main difference: we only expand on tight edges here.
+                // Compute the number of tight edges first. It slows down the printing, but nothing important.
+                unsigned long tight_size = 0;
+                for (unsigned long p = 0; p < factorial(SIZE); p++) {
+                    unsigned long next_adv_index = encode_adv(wf_index, p);
+                    short alg_cost_s = alg_cost(perm_index, p, request);
+                    if (adv_vertices[next_adv_index] + alg_cost_s == alg_vertices[index]) {
+                        tight_size++;
+                    }
+                }
+
+                unsigned long tight_index = 0;
+                for (unsigned long p = 0; p < factorial(SIZE); p++) {
+                    unsigned long next_adv_index = encode_adv(wf_index, p);
+                    short alg_cost_s = alg_cost(perm_index, p, request);
+                    if (adv_vertices[next_adv_index] + alg_cost_s == alg_vertices[index]) {
+                        fprintf(stderr, "Tight edge %lu/%lu between alg%lu and adv%lu.",
+                                tight_index, tight_size, index, next_adv_index);
+
+                        if (p == perm_index) {
+                            fprintf(stderr, " Stay: ");
+                            wf.pm.all_perms[perm_index].print();
+                        } else {
+                            fprintf(stderr, " Move");
+                            if (wf.pm.all_perms[p].data[0] == request) {
+                                fprintf(stderr, " (RIF)");
+                            }
+                            fprintf(stderr, ": ");
+                            wf.pm.all_perms[perm_index].print(stderr, false);
+                            fprintf(stderr, " -> ");
+                            wf.pm.all_perms[p].print();
+                        }
+
+                        if (!adv_vertices_visited[next_adv_index]) {
+                            adv_vertices_visited[next_adv_index] = true;
+                            bfs_q.emplace(true, next_adv_index, shortest_path);
+                        }
+
+                        tight_index++;
+                    }
+                }
+            }
+        }
+        delete[] adv_vertices_visited;
+        delete[] alg_vertices_visited;
+    }
 };
