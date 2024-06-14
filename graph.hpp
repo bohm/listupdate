@@ -10,7 +10,7 @@
 #include "memory_pairs.hpp"
 #include "permutations.hpp"
 #include "algorithm.hpp"
-#include "implicit_graph.hpp"
+// #include "implicit_graph.hpp"
 
 class adversary_vertex;
 
@@ -104,6 +104,9 @@ public:
             MEMORY mem_copy(mem);
             int alg_cost = ALG_SINGLE_STEP(&perm_copy, &mem_copy, item);
             int opt_cost = item;
+            if (FRONT_ACCESS_COSTS_ONE) {
+                opt_cost += 1;
+            }
             adversary_vertex *target = g.get_vert(&perm_copy, mem_copy);
             auto *edge = new adv_outedge(g.edgecounter++, this, target, item, alg_cost, opt_cost);
             edgelist.push_back(edge);

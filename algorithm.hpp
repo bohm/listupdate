@@ -30,6 +30,11 @@ int alg_single_step_bitfield(permutation *perm, memory_bitfield *mem, unsigned s
     }
 
     alg_cost += item_pos;
+
+    if (FRONT_ACCESS_COSTS_ONE) {
+        alg_cost += 1;
+    }
+
     if (position_bit == 0) {
         if (item_pos != 0) {
             mem->set_true(presented_item);
@@ -43,6 +48,7 @@ int alg_single_step_bitfield(permutation *perm, memory_bitfield *mem, unsigned s
         if (ALG_DEBUG) {
             fprintf(stderr, "ALG will swap.\n");
         }
+
 
         mem->set_false(presented_item);
 
