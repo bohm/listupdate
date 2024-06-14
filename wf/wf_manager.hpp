@@ -1,6 +1,7 @@
 #pragma once
 
 #include <random>
+#include <unordered_map>
 #include "perm_manager.hpp"
 #include "workfunction.hpp"
 

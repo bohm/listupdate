@@ -12,9 +12,10 @@ constexpr unsigned short LISTSIZE = 7;
 // #define MEMORY memory_pairs
 // #define ALG_SINGLE_STEP alg_single_step_xoror
 
-#define MEMORY memory_bitfield
-#define ALG_SINGLE_STEP alg_single_step_bitfield
+#define MEMORY memory_perm
+#define ALG_SINGLE_STEP alg_single_step_mru
 
+constexpr bool ALG_DEBUG = false;
 constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;

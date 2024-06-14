@@ -37,39 +37,39 @@ public:
     }
 
 
-    std::pair<unsigned int, unsigned int> decode_adv(uint64_t index) const {
+    std::pair<unsigned long int, unsigned long int> decode_adv(uint64_t index) const {
         return {index / factorial(SIZE), index % factorial(SIZE)};
     }
 
-    uint64_t encode_adv(unsigned int wf_index, unsigned int perm_index) const {
+    uint64_t encode_adv(unsigned long int wf_index, unsigned long int perm_index) const {
         return wf_index * factorial(SIZE) + perm_index;
     }
 
-    std::tuple<unsigned int, unsigned int, unsigned int> decode_alg(uint64_t index) const {
-        unsigned int request_index = index % SIZE;
-        unsigned int rest = index / SIZE;
-        unsigned int perm_index = rest % factorial(SIZE);
-        unsigned int wf_index = rest / factorial(SIZE);
+    std::tuple<unsigned long int, unsigned long int, unsigned long int> decode_alg(uint64_t index) const {
+        unsigned long int request_index = index % SIZE;
+        unsigned long int rest = index / SIZE;
+        unsigned long int perm_index = rest % factorial(SIZE);
+        unsigned long int wf_index = rest / factorial(SIZE);
         return {wf_index, perm_index, request_index};
     }
 
-    uint64_t encode_alg(unsigned int wf_index, unsigned int perm_index, unsigned int request_index) {
+    uint64_t encode_alg(unsigned long int wf_index, unsigned long int perm_index, unsigned long int request_index) {
         return wf_index * factorial(SIZE) * SIZE + perm_index * SIZE + request_index;
     }
 
     void print_adv(uint64_t index) const {
         auto [wf_index, perm_index] = decode_adv(index);
-        fprintf(stderr, "WF index %u, perm_index %u.\n", wf_index, perm_index);
+        fprintf(stderr, "WF index %lu, perm_index %lu.\n", wf_index, perm_index);
         wf.pm.all_perms[perm_index].print();
-        fprintf(stderr, "Work function %u: \n", wf_index);
+        fprintf(stderr, "Work function %lu: \n", wf_index);
         wf.reachable_wfs[wf_index].print();
     }
 
     void print_alg(uint64_t index) const {
         auto [wf_index, perm_index, req] = decode_alg(index);
-        fprintf(stderr, "ALG vertex: index %u, perm_index %u, request %hd.\n", wf_index, perm_index, req);
+        fprintf(stderr, "ALG vertex: index %lu, perm_index %lu, request %lu.\n", wf_index, perm_index, req);
         wf.pm.all_perms[perm_index].print();
-        fprintf(stderr, "Work function %u: \n", wf_index);
+        fprintf(stderr, "Work function %lu: \n", wf_index);
         wf.reachable_wfs[wf_index].print();
     }
 
@@ -232,7 +232,7 @@ public:
             auto [wf_index, perm_index, req] = decode_alg(index);
             if(GRAPH_DEBUG) {
                 fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
-                                "%hd.\n",
+                                "%lu.\n",
                         index, wf_index, perm_index, req);
 
                 print_alg(index);
