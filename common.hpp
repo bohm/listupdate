@@ -7,17 +7,17 @@
 // using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
 using cost_t = float; // If memory is an issue, you can use this.
 
-constexpr unsigned short LISTSIZE = 6;
+constexpr unsigned short LISTSIZE = 7;
 
-#define MEMORY memory_pairs
+#define MEMORY memory_perm
 // #define ALG_SINGLE_STEP alg_single_step_xoror
-#define ALG_SINGLE_STEP alg_single_step_stars
+#define ALG_SINGLE_STEP alg_single_step_mru
 // #define MEMORY memory_bitfield
 // #define ALG_SINGLE_STEP alg_single_step_bitfield
-
+constexpr bool ALG_DEBUG = false;
 constexpr float EPSILON = 0.0001;
-constexpr long double RATIO = 3.667;
-// constexpr long double RATIO = 3.4;
+// constexpr long double RATIO = 3.0;
+constexpr long double RATIO = 3.25;
 #define EDGE_WEIGHT edge_weight_param
 
 
@@ -49,4 +49,8 @@ void print_array(unsigned long int len, cost_t *array) {
         fprintf(stderr, "%f,", array[x]);
     }
     fprintf(stderr, "]\n");
+}
+
+constexpr uint64_t factorial (uint64_t n) {
+    return n <= 1 ? 1 : (n* factorial(n-1));
 }

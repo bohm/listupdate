@@ -15,7 +15,9 @@ add_executable(listupdate
         implicit_graph.hpp
         implicit_bellman_ford.hpp
         storage.hpp
-        wf/wf_manager.hpp)
+        wf/wf_manager.hpp
+        memory_perm.hpp
+        iteration_over_memory.hpp)
 add_executable(permutation_test permutation_test.cpp)
 
 find_package(OpenMP)

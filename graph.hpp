@@ -10,7 +10,6 @@
 #include "memory_pairs.hpp"
 #include "permutations.hpp"
 #include "algorithm.hpp"
-#include "implicit_graph.hpp"
 
 class adversary_vertex;
 

@@ -64,6 +64,6 @@ int main() {
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
-    // g.print_potential();
+    g.print_potential();
     return 0;
 }

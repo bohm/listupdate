@@ -4,7 +4,6 @@
 #include "common.hpp"
 #include "permutations.hpp"
 #include "graph.hpp"
-#include "implicit_graph.hpp"
 
 
 // Note: Bellman for now has a reachability clause. This only makes sense if reachability is computed

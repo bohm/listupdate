@@ -1,11 +1,11 @@
 #pragma once
 
 #include "memory_pairs.hpp"
-#include "permutations.hpp"
 #include "memory_bitfield.hpp"
+#include "memory_perm.hpp"
+#include "permutations.hpp"
+#include "iteration_over_memory.hpp"
 
-
-constexpr bool ALG_DEBUG = false;
 
 
 int alg_single_step_bitfield(permutation *perm, memory_bitfield *mem, unsigned short presented_item) {
@@ -174,5 +174,40 @@ int alg_single_step_xoror(permutation *perm, memory_pairs *mem, unsigned short p
         item_pos--;
     }
 
+    return alg_cost;
+}
+
+
+int alg_single_step_mru(permutation *perm, memory_perm *mem, unsigned short presented_item) {
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
+        fprintf(stderr, "Memory index %lu.\n", mem->data);
+        print_permutation_and_memory<memory_perm>(perm, *mem);
+    }
+
+    int alg_cost = 0;
+    int item_pos = 0;
+    uint64_t flag_cnt = 0;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            break;
+        }
+    }
+
+    alg_cost += item_pos;
+    permutation explicit_memory = perm_from_index_quadratic(mem->data);
+    permutation explicit_memory_inverse = inverse(explicit_memory);
+
+    while (item_pos >= 1 && explicit_memory_inverse[(*perm)[item_pos-1]] > explicit_memory_inverse[presented_item]) {
+        swap(perm, item_pos-1);
+        alg_cost++;
+        item_pos--;
+    }
+
+    mem->mtf(presented_item);
+
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG's cost: %d.\n", alg_cost);
+    }
     return alg_cost;
 }
