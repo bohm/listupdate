@@ -1,13 +1,7 @@
 #pragma once
 
 #include <array>
-#include "memory_pairs.hpp"
-#include "memory_bitfield.hpp"
-
-constexpr uint64_t factorial (uint64_t n) {
-    return n <= 1 ? 1 : (n* factorial(n-1));
-}
-
+#include "common.hpp"
 
 void recompute_alg_perm(permutation *alg_p, permutation *opt_single_swap) {
     for (int i = 0; i <LISTSIZE; i++) {
@@ -81,19 +75,6 @@ void iterate_over_permutations(void (*permutation_pointer_function)(permutation 
     while(increase(&iterator));
 }
 
-void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function)(permutation *, MEMORY)) {
-    permutation iterator = IDENTITY;
-
-    do {
-        MEMORY m;
-        while (m.data <= MEMORY::max) {
-            perm_and_memory_pointer_function(&iterator, m);
-            m.data++;
-        }
-    }
-    while(increase(&iterator));
-
-}
 
 void print_permutation(permutation *perm, FILE *f = stderr, bool newline = true) {
     fprintf(f, "(");
@@ -108,11 +89,6 @@ void print_permutation(permutation *perm, FILE *f = stderr, bool newline = true)
     if(newline) {
         fprintf(f, "\n");
     }
-}
-
-template <class mem> void print_permutation_and_memory(permutation *perm, mem m) {
-    print_permutation(perm);
-    m.full_print();
 }
 
 // Quadratic lexicographic order, should be good enough for short arrays.
@@ -177,4 +153,12 @@ void swap(permutation *perm, int swap_target) {
     }
 
     std::swap( (*perm)[swap_target], (*perm)[swap_target+1]);
+}
+
+permutation inverse(const permutation& p) {
+    permutation ret;
+    for (short i = 0; i < LISTSIZE; i++) {
+        ret[p[i]] = i;
+    }
+    return ret;
 }
