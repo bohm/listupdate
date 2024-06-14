@@ -26,4 +26,7 @@ if(OpenMP_CXX_FOUND)
 endif()
 add_executable(workfunction wf/workfunction.cpp
         wf/common.hpp
-        wf/game_graph.hpp)
+        wf/game_graph.hpp
+        wf/double_zobrist.hpp)
+add_executable(reachablewf wf/reachablewf.cpp
+        wf/double_zobrist.hpp)

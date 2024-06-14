@@ -2,17 +2,13 @@
 
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
+#include <queue>
 #include "perm_manager.hpp"
 #include "workfunction.hpp"
+#include "../parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
+#include "double_zobrist.hpp"
 
-
-// Mersenne twister.
-std::mt19937_64 gen(12345);
-
-uint64_t rand_64bit() {
-    uint64_t r = gen();
-    return r;
-}
 
 template <int SIZE> class wf_manager {
 public:
@@ -95,6 +91,39 @@ public:
 
     short update_cost(uint64_t wf_index, short request) {
         return min_update_costs[wf_index][request];
+    }
+
+    // Counts reachable functions without initializing the full set of reachable functions.
+    // Gentler on the memory, useful primarily for estimates.
+    uint64_t count_reachable() {
+        double_zobrist<SIZE> dz;
+        dz.init();
+        std::unordered_set<double_hashed_el> reachable_hashes;
+        // phmap::flat_hash_set<double_hashed_el> reachable_hashes;
+        workfunction<SIZE> initial = invs;
+        std::queue<workfunction<SIZE>> q;
+        reachable_hashes.insert(dz.hash(&initial));
+        q.push(initial);
+        while (!q.empty()) {
+            workfunction<SIZE> front = q.front();
+            q.pop();
+            reachable_wfs.push_back(front);
+
+            for (short req = 0; req < SIZE; req++) {
+                workfunction<SIZE> new_wf = front;
+                flat_update(&new_wf, req);
+                cut_minimum(&new_wf);
+                dynamic_update(&new_wf);
+                double_hashed_el h = dz.hash(&new_wf);
+                if (!reachable_hashes.contains(h)) {
+                    reachable_hashes.insert(h);
+                    q.push(new_wf);
+                }
+            }
+
+        }
+
+        return reachable_hashes.size();
     }
 
     void initialize_reachable() {
