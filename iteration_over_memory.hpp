@@ -1,11 +1,11 @@
 #pragma once
-#include "permutations.hpp"
+#include "old_perm_functions.hpp"
 #include "memory_bitfield.hpp"
 #include "memory_pairs.hpp"
 #include "memory_perm.hpp"
 
-void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function)(permutation *, MEMORY)) {
-    permutation iterator = IDENTITY;
+void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function)(array_as_permutation *, MEMORY)) {
+    array_as_permutation iterator = IDENTITY;
 
     do {
         MEMORY m;
@@ -19,7 +19,7 @@ void iterate_over_memory_and_permutation(void (*perm_and_memory_pointer_function
 }
 
 
-template <class mem> void print_permutation_and_memory(permutation *perm, mem m) {
+template <class mem> void print_permutation_and_memory(array_as_permutation *perm, mem m) {
     print_permutation(perm);
     m.full_print();
 }

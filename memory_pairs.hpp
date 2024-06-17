@@ -73,7 +73,7 @@ public:
         clear_sorted_pair(std::min(i,j), std::max(i,j));
     }
 
-    memory_pairs recompute(permutation *alg_relabeling) {
+    memory_pairs recompute(array_as_permutation *alg_relabeling) {
         memory_pairs new_mem;
         for (int i = 0; i < LISTSIZE; i++) {
             for (int j = i+1; j < LISTSIZE; j++) {

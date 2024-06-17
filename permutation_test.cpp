@@ -1,5 +1,5 @@
 
-#include "permutations.hpp"
+#include "old_perm_functions.hpp"
 
 void print_canonical_order() {
     fprintf(stderr, "LISTSIZE is %d.\n", LISTSIZE);

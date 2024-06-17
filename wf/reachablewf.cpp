@@ -3,8 +3,8 @@
 //
 
 #include <cstdio>
-#include "common.hpp"
-#include "perm_manager.hpp"
+#include "../common.hpp"
+#include "../perm_manager.hpp"
 #include "wf_manager.hpp"
 
 int main()

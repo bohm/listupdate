@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include "memory_pairs.hpp"
-#include "permutations.hpp"
+#include "old_perm_functions.hpp"
 #include "algorithm.hpp"
 
 class adversary_vertex;
@@ -23,7 +23,7 @@ public:
     uint64_t reachable_vertices = 0;
     std::array<vert_container, factorial(LISTSIZE)> verts;
 
-    adversary_vertex *get_vert(permutation *perm, MEMORY m) const
+    adversary_vertex *get_vert(array_as_permutation *perm, MEMORY m) const
     {
         return verts[lexindex_quadratic(perm)][m.data];
     }
@@ -76,13 +76,13 @@ public:
 class adversary_vertex {
 public:
     uint64_t id;
-    permutation perm;
+    array_as_permutation perm;
     MEMORY mem;
     std::vector<adv_outedge*> edgelist = {};
     bool reachable = false;
 
 
-    adversary_vertex(permutation *p, MEMORY m) {
+    adversary_vertex(array_as_permutation *p, MEMORY m) {
         perm = *p;
         mem = m;
         id = lexindex_quadratic(&perm) * (MEMORY::max + 1) + mem.data;
@@ -99,7 +99,7 @@ public:
 
     void build_presentation_edges() {
         for (short item = 0; item < LISTSIZE; item++) {
-            permutation perm_copy(perm);
+            array_as_permutation perm_copy(perm);
             MEMORY mem_copy(mem);
             int alg_cost = ALG_SINGLE_STEP(&perm_copy, &mem_copy, item);
             int opt_cost = item;
@@ -119,10 +119,10 @@ public:
 
     void build_translation_edges() {
         for (int opt_swap = 0; opt_swap < LISTSIZE-1; opt_swap++) {
-            permutation single_swap = IDENTITY;
+            array_as_permutation single_swap = IDENTITY;
             swap(&single_swap, opt_swap);
 
-            permutation perm_copy(perm);
+            array_as_permutation perm_copy(perm);
             MEMORY mem_copy = mem.recompute(&single_swap);
             recompute_alg_perm(&perm_copy, &single_swap);
             adversary_vertex *target = g.get_vert(&perm_copy, mem_copy);
@@ -164,7 +164,7 @@ void adv_outedge::print(FILE* f) {
 
 }
 
-void add_vertex_to_graph(permutation *perm, MEMORY m) {
+void add_vertex_to_graph(array_as_permutation *perm, MEMORY m) {
     auto *v = new adversary_vertex(perm, m);
     g.verts[lexindex_quadratic(perm)][m.data] = v;
 }

@@ -191,7 +191,7 @@ public:
 
             // Instead of all choices, we only allow MTF choices.
             for (short el = 0; el < SIZE; el++) {
-                unsigned long p = wf.pm.all_perms[perm_index].mtf(el).id();
+                unsigned long p = wf.pm.all_perms[perm_index].mtf_copy(el).id();
                 if(GRAPH_DEBUG) {
                     fprintf(stderr, "alg%lu: Evaluating edge: ", index);
                     wf.pm.all_perms[perm_index].print(stderr, false);
@@ -242,7 +242,7 @@ public:
             // Instead of all choices, we only allow the request to move forward.
             short request_pos = wf.pm.all_perms[perm_index].position(req);
             for (short target = 0; target <= request_pos; target++) {
-                unsigned long p = wf.pm.all_perms[perm_index].move_forward(req, target).id();
+                unsigned long p = wf.pm.all_perms[perm_index].move_forward_copy(req, target).id();
 
 
                 if(GRAPH_DEBUG) {

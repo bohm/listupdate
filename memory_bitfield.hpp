@@ -36,7 +36,7 @@ public:
     }
 
 
-    memory_bitfield recompute(permutation *alg_relabeling) {
+    memory_bitfield recompute(array_as_permutation *alg_relabeling) {
         memory_bitfield new_mem;
         for (int i = 0; i < LISTSIZE; i++) {
             int relabeled_i = (*alg_relabeling)[i];

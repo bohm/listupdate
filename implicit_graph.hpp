@@ -6,7 +6,7 @@
 
 #include "common.hpp"
 #include "algorithm.hpp"
-#include "permutations.hpp"
+#include "old_perm_functions.hpp"
 
 class implicit_graph {
 public:
@@ -129,7 +129,7 @@ public:
         return -1;
     }
 
-    static void vertex_print(long int id, permutation *p, memory_pairs *mem, FILE *f) {
+    static void vertex_print(long int id, array_as_permutation *p, memory_pairs *mem, FILE *f) {
 
         fprintf(f, "%ld [label=\"%lu,", id, mem->data);
         print_permutation(p, f, false);

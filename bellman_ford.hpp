@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 #include "common.hpp"
-#include "permutations.hpp"
+#include "old_perm_functions.hpp"
 #include "graph.hpp"
 
 

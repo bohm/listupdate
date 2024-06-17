@@ -7,7 +7,11 @@
 // using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
 using cost_t = float; // If memory is an issue, you can use this.
 
-constexpr unsigned short LISTSIZE = 7;
+
+#define TSIZE 6
+
+constexpr int TESTSIZE = TSIZE;
+constexpr unsigned short LISTSIZE = TSIZE;
 
 // #define MEMORY memory_pairs
 // #define ALG_SINGLE_STEP alg_single_step_xoror
@@ -16,11 +20,12 @@ constexpr unsigned short LISTSIZE = 7;
 #define ALG_SINGLE_STEP alg_single_step_mru
 
 constexpr bool ALG_DEBUG = false;
+constexpr bool GRAPH_DEBUG = false;
 constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
 // constexpr long double RATIO = 3.0;
-constexpr long double RATIO = 3.25;
+constexpr long double RATIO = 3.0;
 #define EDGE_WEIGHT edge_weight_param
 
 
@@ -28,7 +33,7 @@ cost_t edge_weight_param(cost_t opt_cost, cost_t alg_cost) {
     return ((cost_t) RATIO)*opt_cost - alg_cost;
 }
 
-using permutation = std::array<short, LISTSIZE>;
+using array_as_permutation = std::array<short, LISTSIZE>;
 
 constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_ordering() {
     std::array<int, LISTSIZE*LISTSIZE> co {0};
@@ -54,6 +59,10 @@ void print_array(unsigned long int len, cost_t *array) {
     fprintf(stderr, "]\n");
 }
 
-constexpr uint64_t factorial (uint64_t n) {
+constexpr uint64_t factorial(uint64_t n) {
     return n <= 1 ? 1 : (n* factorial(n-1));
+}
+
+constexpr short diameter_bound(short n) {
+    return (n*(n-1))/2;
 }

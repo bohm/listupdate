@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(listupdate
         main.cpp
         memory_pairs.hpp
-        permutations.hpp
+        old_perm_functions.hpp
         common.hpp
         graph.hpp
         algorithm.hpp
@@ -25,7 +25,6 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(listupdate PUBLIC OpenMP::OpenMP_CXX)
 endif()
 add_executable(workfunction wf/workfunction.cpp
-        wf/common.hpp
         wf/game_graph.hpp
         wf/double_zobrist.hpp)
 add_executable(reachablewf wf/reachablewf.cpp

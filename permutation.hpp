@@ -7,7 +7,7 @@
 #include <cstdint>
 
 #include "common.hpp"
-#include "workfunction.hpp"
+#include "wf/workfunction.hpp"
 
 template <short SIZE> class permutation {
 public:
@@ -66,6 +66,18 @@ public:
         std::swap(data[swap_source], data[swap_source+1]);
     }
 
+    void move_forward_inplace(short element, short target_pos) {
+        short pos = position(element);
+        while (pos > target_pos) {
+            swap_inplace(pos-1);
+            pos--;
+        }
+    }
+
+    void mtf_inplace(short element) {
+        move_forward_inplace(element, 0);
+    }
+
     short position(short element) const {
         for (short i = 0; i < SIZE; i++) {
             if (data[i] == element) {
@@ -76,7 +88,7 @@ public:
     }
 
 
-    permutation<SIZE> move_forward(short element, short target_pos) const {
+    permutation<SIZE> move_forward_copy(short element, short target_pos) const {
         permutation<SIZE> ret(*this);
         short pos = position(element);
         while (pos > target_pos) {
@@ -87,8 +99,8 @@ public:
     }
 
     // Performs move to front.
-    permutation<SIZE> mtf(short element) const {
-        return move_forward(element, 0);
+    permutation<SIZE> mtf_copy(short element) const {
+        return move_forward_copy(element, 0);
     }
 
     short inversions() const {
@@ -107,5 +119,38 @@ public:
         }
 
         return copy.inversions();
+    }
+
+    static permutation<SIZE> perm_from_index_quadratic(uint64_t index) {
+        permutation<SIZE> ret;
+
+        std::array<bool, SIZE> placed{};
+
+        for (int i = 0; i < SIZE; i++) {
+            short relpos = (short) (index / factorial(SIZE-i-1));
+            // fprintf(stderr, "Iteration %d: Computer relpos %hd.\n", i, relpos);
+            short candidate = 0;
+            // Compute the i-th unplaced number.
+            while (true) {
+                if (relpos == 0 && !placed[candidate]) {
+                    break;
+                }
+
+                if (!placed[candidate]) {
+                    relpos--;
+                }
+                candidate++;
+            }
+
+            // assert(candidate >= 0 && candidate < LISTSIZE && !placed[candidate]);
+            // fprintf(stderr, "Iteration %d: Placing digit %hd.\n", i, candidate);
+
+            ret.data[i] = candidate;
+            placed[candidate] = true;
+
+            index %= factorial(SIZE-i-1);
+        }
+
+        return ret;
     }
 };

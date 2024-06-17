@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "../common.hpp"
 
 template <int SIZE> class workfunction {
 public:

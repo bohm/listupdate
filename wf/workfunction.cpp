@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <unordered_set>
 #include <queue>
-#include "perm_manager.hpp"
+#include "../perm_manager.hpp"
 #include "wf_manager.hpp"
 #include "workfunction.hpp"
 #include "game_graph.hpp"

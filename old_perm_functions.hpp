@@ -3,7 +3,7 @@
 #include <array>
 #include "common.hpp"
 
-void recompute_alg_perm(permutation *alg_p, permutation *opt_single_swap) {
+void recompute_alg_perm(array_as_permutation *alg_p, array_as_permutation *opt_single_swap) {
     for (int i = 0; i <LISTSIZE; i++) {
         (*alg_p)[i] = (*opt_single_swap)[(*alg_p)[i]];
     }
@@ -11,8 +11,8 @@ void recompute_alg_perm(permutation *alg_p, permutation *opt_single_swap) {
 
 
 
-constexpr permutation identity() {
-    permutation ret {0};
+constexpr array_as_permutation identity() {
+    array_as_permutation ret {0};
     for (short i = 0; i < LISTSIZE; i++) {
         ret[i] = i;
     }
@@ -20,8 +20,8 @@ constexpr permutation identity() {
 }
 
 
-constexpr permutation full_inverse() {
-    permutation ret {0};
+constexpr array_as_permutation full_inverse() {
+    array_as_permutation ret {0};
     for (short i = 0; i < LISTSIZE; i++) {
         ret[i] = LISTSIZE - 1 - i;
     }
@@ -31,7 +31,7 @@ constexpr permutation full_inverse() {
 // Lexicographically next permutation. Returns false if perm was the largest one.
 // Knuth's algorithm.
 // Implementation from https://www.nayuki.io/page/next-lexicographical-permutation-algorithm.
-bool increase(permutation *perm) {
+bool increase(array_as_permutation *perm) {
     // Find non-increasing suffix
     size_t i = LISTSIZE - 1;
     while (i > 0 && (*perm)[i - 1] >= (*perm)[i]) {
@@ -63,11 +63,11 @@ bool increase(permutation *perm) {
     return true;
 }
 
-constexpr permutation IDENTITY = identity();
-constexpr permutation FULL_INVERSE = full_inverse();
+constexpr array_as_permutation IDENTITY = identity();
+constexpr array_as_permutation FULL_INVERSE = full_inverse();
 
-void iterate_over_permutations(void (*permutation_pointer_function)(permutation *)) {
-    permutation iterator = IDENTITY;
+void iterate_over_permutations(void (*permutation_pointer_function)(array_as_permutation *)) {
+    array_as_permutation iterator = IDENTITY;
 
     do {
         permutation_pointer_function(&iterator);
@@ -76,7 +76,7 @@ void iterate_over_permutations(void (*permutation_pointer_function)(permutation 
 }
 
 
-void print_permutation(permutation *perm, FILE *f = stderr, bool newline = true) {
+void print_permutation(array_as_permutation *perm, FILE *f = stderr, bool newline = true) {
     fprintf(f, "(");
     for (int i = 0; i < LISTSIZE; i++) {
         fprintf(f, "%hd", (*perm)[i]);
@@ -92,7 +92,7 @@ void print_permutation(permutation *perm, FILE *f = stderr, bool newline = true)
 }
 
 // Quadratic lexicographic order, should be good enough for short arrays.
-uint64_t lexindex_quadratic(permutation *perm) {
+uint64_t lexindex_quadratic(array_as_permutation *perm) {
     uint64_t ret = 0;
     for ( int i = 0; i < LISTSIZE; i ++) {
         uint64_t relative_position = 0;
@@ -112,8 +112,8 @@ uint64_t lexindex_quadratic(permutation *perm) {
     return ret;
 }
 
-permutation perm_from_index_quadratic(uint64_t index) {
-    permutation ret;
+array_as_permutation perm_from_index_quadratic(uint64_t index) {
+    array_as_permutation ret;
 
     std::array<bool, LISTSIZE> placed{};
 
@@ -146,7 +146,7 @@ permutation perm_from_index_quadratic(uint64_t index) {
 }
 
 // Performs a trivial swap.
-void swap(permutation *perm, int swap_target) {
+void swap(array_as_permutation *perm, int swap_target) {
     // Allow for no-ops.
     if (swap_target == -1) {
         return;
@@ -155,8 +155,8 @@ void swap(permutation *perm, int swap_target) {
     std::swap( (*perm)[swap_target], (*perm)[swap_target+1]);
 }
 
-permutation inverse(const permutation& p) {
-    permutation ret;
+array_as_permutation inverse(const array_as_permutation & p) {
+    array_as_permutation ret;
     for (short i = 0; i < LISTSIZE; i++) {
         ret[p[i]] = i;
     }

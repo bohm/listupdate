@@ -4,7 +4,7 @@
 #include <omp.h>
 #include <atomic>
 #include "common.hpp"
-#include "permutations.hpp"
+#include "old_perm_functions.hpp"
 #include "implicit_graph.hpp"
 #include "storage.hpp"
 

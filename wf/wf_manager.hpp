@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
-#include "perm_manager.hpp"
+#include "../perm_manager.hpp"
 #include "workfunction.hpp"
 #include "../parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
 #include "double_zobrist.hpp"

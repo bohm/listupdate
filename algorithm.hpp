@@ -3,12 +3,12 @@
 #include "memory_pairs.hpp"
 #include "memory_bitfield.hpp"
 #include "memory_perm.hpp"
-#include "permutations.hpp"
+#include "old_perm_functions.hpp"
 #include "iteration_over_memory.hpp"
 
 
 
-int alg_single_step_bitfield(permutation *perm, memory_bitfield *mem, unsigned short presented_item) {
+int alg_single_step_bitfield(array_as_permutation *perm, memory_bitfield *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         print_permutation_and_memory<memory_bitfield>(perm, *mem);
@@ -67,7 +67,7 @@ int alg_single_step_bitfield(permutation *perm, memory_bitfield *mem, unsigned s
 
 
 // Returns ALG's cost and may edit both permutation and memory.
-int alg_single_step_stars(permutation *perm, memory_pairs *mem, unsigned short presented_item) {
+int alg_single_step_stars(array_as_permutation *perm, memory_pairs *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         print_permutation_and_memory(perm, *mem);
@@ -128,7 +128,7 @@ int alg_single_step_stars(permutation *perm, memory_pairs *mem, unsigned short p
 
 
 // Returns ALG's cost and may edit both permutation and memory.
-int alg_single_step_xoror(permutation *perm, memory_pairs *mem, unsigned short presented_item) {
+int alg_single_step_xoror(array_as_permutation *perm, memory_pairs *mem, unsigned short presented_item) {
     int alg_cost = 0;
     int item_pos = 0;
     int target_item_pos = -1;
@@ -184,7 +184,8 @@ int alg_single_step_xoror(permutation *perm, memory_pairs *mem, unsigned short p
 }
 
 
-int alg_single_step_mru(permutation *perm, memory_perm *mem, unsigned short presented_item) {
+
+int alg_single_step_mru(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         fprintf(stderr, "Memory index %lu.\n", mem->data);
@@ -201,8 +202,8 @@ int alg_single_step_mru(permutation *perm, memory_perm *mem, unsigned short pres
     }
 
     alg_cost += item_pos;
-    permutation explicit_memory = perm_from_index_quadratic(mem->data);
-    permutation explicit_memory_inverse = inverse(explicit_memory);
+    array_as_permutation explicit_memory = perm_from_index_quadratic(mem->data);
+    array_as_permutation explicit_memory_inverse = inverse(explicit_memory);
 
     while (item_pos >= 1 && explicit_memory_inverse[(*perm)[item_pos-1]] > explicit_memory_inverse[presented_item]) {
         swap(perm, item_pos-1);
@@ -217,3 +218,59 @@ int alg_single_step_mru(permutation *perm, memory_perm *mem, unsigned short pres
     }
     return alg_cost;
 }
+
+/*
+
+int alg_single_step_mru_minimize_inv(permutation *perm, memory_perm *mem, unsigned short presented_item) {
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
+        fprintf(stderr, "Memory index %lu.\n", mem->data);
+        print_permutation_and_memory<memory_perm>(perm, *mem);
+    }
+
+    int alg_cost = 0;
+    int item_pos = 0;
+    uint64_t flag_cnt = 0;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            break;
+        }
+    }
+
+    alg_cost += item_pos;
+    // Compute the position of presented_item, include the search for it in alg_cost.
+
+    permutation explicit_memory = perm_from_index_quadratic(mem->data);
+
+    // Compute the minimum inversion count.
+    int min_inversions_val = std::numeric_limits<int>::max();
+    int min_inversions_target = item_pos;
+
+    for (int move_target = item_pos; move_target >= 0; move_target-- ) {
+        permutation candidate_perm(*perm);
+        int pos_in_candidate = item_pos;
+        while(pos_in_candidate > move_target) {
+            swap(&candidate_perm, pos_in_candidate-1);
+            pos_in_candidate--;
+        }
+
+        int inversions = candidate_perm.inversions_wrt();
+
+    }
+    permutation explicit_memory_inverse = inverse(explicit_memory);
+
+    while (item_pos >= 1 && explicit_memory_inverse[(*perm)[item_pos-1]] > explicit_memory_inverse[presented_item]) {
+        swap(perm, item_pos-1);
+        alg_cost++;
+        item_pos--;
+    }
+
+    mem->mtf_copy(presented_item);
+
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG's cost: %d.\n", alg_cost);
+    }
+    return alg_cost;
+}
+
+*/

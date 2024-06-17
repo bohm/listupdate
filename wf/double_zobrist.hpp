@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <unordered_set>
 #include <random>
-#include "common.hpp"
+#include "../common.hpp"
 #include "workfunction.hpp"
 
 // Mersenne twister.
