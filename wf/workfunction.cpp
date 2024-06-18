@@ -2,13 +2,13 @@
 #include <cstdio>
 #include <unordered_set>
 #include <queue>
-#include "../perm_manager.hpp"
-#include "wf_manager.hpp"
-#include "workfunction.hpp"
+#include "../permutation_graph.hpp"
+#include "../wf_manager.hpp"
+#include "../workfunction.hpp"
 #include "game_graph.hpp"
 
 int main() {
-    perm_manager<TESTSIZE> pm{};
+    permutation_graph<TESTSIZE> pm{};
     pm.populate_all_perms();
     fprintf(stderr, "Total permutations %zu.\n", pm.all_perms.size());
     for (auto & all_perm : pm.all_perms) {
@@ -20,7 +20,7 @@ int main() {
 
     wf_manager<TESTSIZE> wm(pm);
 
-    invs.print();
+    invs->print();
 
 #if TSIZE == 4
     // Test.

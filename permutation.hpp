@@ -7,7 +7,7 @@
 #include <cstdint>
 
 #include "common.hpp"
-#include "wf/workfunction.hpp"
+#include "workfunction.hpp"
 
 template <short SIZE> class permutation {
 public:
@@ -74,8 +74,28 @@ public:
         }
     }
 
+    permutation<SIZE> move_from_position_to_position(short source_pos, short target_pos) const {
+        permutation<SIZE> ret(*this);
+        while (source_pos > target_pos) {
+            ret.swap_inplace(source_pos-1);
+            source_pos--;
+        }
+        return ret;
+
+    }
+
+    permutation<SIZE> move_forward_copy(short element, short target_pos) const {
+        short pos = position(element);
+        return move_from_position_to_position(pos, target_pos);
+    }
+
     void mtf_inplace(short element) {
         move_forward_inplace(element, 0);
+    }
+
+    // Performs move to front.
+    permutation<SIZE> mtf_copy(short element) const {
+        return move_forward_copy(element, 0);
     }
 
     short position(short element) const {
@@ -87,24 +107,8 @@ public:
         return -1;
     }
 
-
-    permutation<SIZE> move_forward_copy(short element, short target_pos) const {
-        permutation<SIZE> ret(*this);
-        short pos = position(element);
-        while (pos > target_pos) {
-            ret.swap_inplace(pos-1);
-            pos--;
-        }
-        return ret;
-    }
-
-    // Performs move to front.
-    permutation<SIZE> mtf_copy(short element) const {
-        return move_forward_copy(element, 0);
-    }
-
     short inversions() const {
-        return invs.vals[id()];
+        return invs->vals[id()];
     }
 
     short inversions_wrt(const permutation<SIZE> *other) const {

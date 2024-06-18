@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../common.hpp"
+#include <algorithm>
+#include "common.hpp"
 
 template <int SIZE> class workfunction {
 public:
@@ -27,4 +28,4 @@ public:
     }
 };
 
-workfunction<TESTSIZE> invs{};
+workfunction<TESTSIZE> *invs = nullptr;

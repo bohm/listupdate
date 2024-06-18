@@ -5,7 +5,8 @@
 #include "memory_perm.hpp"
 #include "old_perm_functions.hpp"
 #include "iteration_over_memory.hpp"
-
+#include "permutation.hpp"
+#include "wf_manager.hpp"
 
 
 int alg_single_step_bitfield(array_as_permutation *perm, memory_bitfield *mem, unsigned short presented_item) {
@@ -219,9 +220,8 @@ int alg_single_step_mru(array_as_permutation *perm, memory_perm *mem, unsigned s
     return alg_cost;
 }
 
-/*
 
-int alg_single_step_mru_minimize_inv(permutation *perm, memory_perm *mem, unsigned short presented_item) {
+int alg_single_step_mru_minimize_inv(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         fprintf(stderr, "Memory index %lu.\n", mem->data);
@@ -240,37 +240,41 @@ int alg_single_step_mru_minimize_inv(permutation *perm, memory_perm *mem, unsign
     alg_cost += item_pos;
     // Compute the position of presented_item, include the search for it in alg_cost.
 
-    permutation explicit_memory = perm_from_index_quadratic(mem->data);
+    permutation<LISTSIZE> mru_memory = permutation<LISTSIZE>::perm_from_index_quadratic(mem->data);
 
     // Compute the minimum inversion count.
     int min_inversions_val = std::numeric_limits<int>::max();
     int min_inversions_target = item_pos;
 
+    permutation<LISTSIZE> perm_object(*perm);
     for (int move_target = item_pos; move_target >= 0; move_target-- ) {
-        permutation candidate_perm(*perm);
-        int pos_in_candidate = item_pos;
-        while(pos_in_candidate > move_target) {
-            swap(&candidate_perm, pos_in_candidate-1);
-            pos_in_candidate--;
+        auto perm_after_move = perm_object.move_from_position_to_position(item_pos, move_target);
+        int inversions = perm_after_move.inversions_wrt(&mru_memory);
+
+        if (ALG_DEBUG) {
+            fprintf(stderr, "Candidate for a move (%d inversions): ", inversions);
+            perm_after_move.print();
         }
-
-        int inversions = candidate_perm.inversions_wrt();
-
+        if (inversions <= min_inversions_val) {
+            if(ALG_DEBUG) {
+                fprintf(stderr, "The number of inversions %d is lower than previous min of %d.\n",
+                        inversions, min_inversions_val);
+            }
+            min_inversions_val = inversions;
+            min_inversions_target = move_target;
+        }
     }
-    permutation explicit_memory_inverse = inverse(explicit_memory);
 
-    while (item_pos >= 1 && explicit_memory_inverse[(*perm)[item_pos-1]] > explicit_memory_inverse[presented_item]) {
+    while (item_pos >= 1 && item_pos > min_inversions_target) {
         swap(perm, item_pos-1);
         alg_cost++;
         item_pos--;
     }
 
-    mem->mtf_copy(presented_item);
+    mem->mtf(presented_item);
 
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG's cost: %d.\n", alg_cost);
     }
     return alg_cost;
 }
-
-*/

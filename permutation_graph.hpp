@@ -9,7 +9,7 @@
 #include "permutation.hpp"
 
 
-template <short SIZE> class perm_manager
+template <short SIZE> class permutation_graph
 {
 public:
     constexpr permutation<SIZE> identity() {
@@ -100,4 +100,12 @@ public:
             fprintf(stderr, "]\n");
         }
     }
+
+    void init() {
+        populate_all_perms();
+        populate_adjacencies();
+    }
 };
+
+// A global variable to use the current permutation graph elsewhere. Slightly ugly, but fast.
+permutation_graph<LISTSIZE> *pg = nullptr;

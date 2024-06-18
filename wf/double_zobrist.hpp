@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <random>
 #include "../common.hpp"
-#include "workfunction.hpp"
+#include "../workfunction.hpp"
 
 // Mersenne twister.
 std::mt19937_64 gen(12345);

@@ -1,8 +1,13 @@
 // #include "implicit_bellman_ford.hpp"
 #include "bellman_ford.hpp"
+#include "permutation_graph.hpp"
 
 int main(void) {
     // FILE *f = fopen("cmake-build-debug/graphdump.dot", "w");
+    pg = new permutation_graph<LISTSIZE>();
+    pg->init();
+    invs = new workfunction<LISTSIZE>{};
+    wf_manager<LISTSIZE>::initialize_inversions();
     create_graph();
     g.dfs_reachability();
 

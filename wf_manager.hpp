@@ -4,15 +4,15 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
-#include "../perm_manager.hpp"
+#include "permutation_graph.hpp"
 #include "workfunction.hpp"
-#include "../parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
-#include "double_zobrist.hpp"
+#include "parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
+#include "wf/double_zobrist.hpp"
 
 
 template <int SIZE> class wf_manager {
 public:
-    perm_manager<SIZE>& pm;
+    permutation_graph<SIZE>& pm;
 
     std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial(SIZE)> zobrist;
 
@@ -20,7 +20,7 @@ public:
     std::vector<std::array<unsigned int, SIZE>> adjacent_functions;
     std::vector<std::array<short, SIZE>> min_update_costs;
     std::unordered_map<uint64_t, unsigned int> hash_to_index;
-    wf_manager(perm_manager<SIZE> &p) : pm(p) {
+    wf_manager(permutation_graph<SIZE> &p) : pm(p) {
 
         for (int i = 0; i < factorial(SIZE); i++) {
             for (int v = 0; v < diameter_bound(SIZE)+1; v++) {
@@ -31,13 +31,13 @@ public:
         initialize_inversions();
     }
 
-    void initialize_inversions() {
-        invs.vals[0] = 0;
+    static void initialize_inversions() {
+        invs->vals[0] = 0;
         for (int i = 1; i < factorial(TESTSIZE); i++) {
-            invs.vals[i] = diameter_bound(TESTSIZE);
+            invs->vals[i] = diameter_bound(TESTSIZE);
         }
 
-        dynamic_update(&invs);
+        dynamic_update(invs);
     }
 
     void flat_update(workfunction<SIZE> *wf, short req) {
@@ -61,11 +61,12 @@ public:
         return ret;
     }
 
-    void dynamic_update(workfunction<SIZE> *wf) {
+    // Static, but requires the pg pointer to be populated.
+    static void dynamic_update(workfunction<SIZE> *wf) {
         for (short value = 0; value < diameter_bound(SIZE); value++) {
             for (int i = 0; i < factorial(SIZE); i++) {
                 if (wf->vals[i] == value) {
-                    for (uint64_t adj: pm.adjacencies[i]) {
+                    for (uint64_t adj: pg->adjacencies[i]) {
                         wf->vals[adj] = std::min((short) (value+1), wf->vals[adj]);
                     }
                 }
@@ -100,7 +101,7 @@ public:
         dz.init();
         std::unordered_set<double_hashed_el> reachable_hashes;
         // phmap::flat_hash_set<double_hashed_el> reachable_hashes;
-        workfunction<SIZE> initial = invs;
+        workfunction<SIZE> initial = *invs;
         std::queue<workfunction<SIZE>> q;
         reachable_hashes.insert(dz.hash(&initial));
         q.push(initial);

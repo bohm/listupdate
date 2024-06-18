@@ -1,7 +1,7 @@
 #pragma once
 
 #include <omp.h>
-#include "wf_manager.hpp"
+#include "../wf_manager.hpp"
 
 template <short SIZE> class game_graph {
 private:
