@@ -24,12 +24,12 @@ void bellman_ford_compare_exchange() {
 
     distances[0] = 0;
 
+    bool update_happened = false;
     for (int iteration = 0; iteration < n; iteration++) {
         fprintf(stderr, "Iteration %d.\n", iteration);
-        bool update_happened = false;
+        update_happened = false;
 
         fprintf(stderr, "Iteration %d distances[0]: %f.\n", iteration, distances[0].load());
-
 
 #pragma omp parallel for
         // For every edge means going through all vertices once more and listing the edges there.
@@ -43,7 +43,7 @@ void bellman_ford_compare_exchange() {
                 // is that distances[to] should not change while we do the comparison.
 
                 cost_t dist_from = distances[from];
-                  if (dist_from != (cost_t) INT32_MAX) {
+                if (dist_from != (cost_t) INT32_MAX) {
                     cost_t dist_to = distances[to].load(std::memory_order_relaxed);
                     if (dist_from + weight < dist_to) {
                         update_happened = true;
@@ -74,6 +74,7 @@ void bellman_ford_compare_exchange() {
             }
         }
 
+
         if (!update_happened) {
             break;
         }
@@ -90,32 +91,37 @@ void bellman_ford_compare_exchange() {
     // Test for negative cycles.
     // bool negative_cycle_found = false;
 
-    // fprintf(stderr, "Iteration %d.\n", iteration);
-    bool update_happened = false;
-    // For every edge means going through all vertices once more and listing the edges there.
-    for (long int from = 0; from < n; from++) {
-        // First, recover vertex description.
-        auto [v_perm, v_mem] = implicit_graph::get_vertex_information(from);
-        // Go through presentation edges first.
-        for (int j = 0; j < LISTSIZE; j++) {
-            auto [to, weight] = implicit_graph::presentation_edge(v_perm, v_mem, j);
-            if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
-                fprintf(stderr, "Negative cycle found in the graph.\n");
-                return;
+    if (update_happened && distances[0] >= 0.0) {
+        // fprintf(stderr, "Iteration %d.\n", iteration);
+        bool update_happened = false;
+        // For every edge means going through all vertices once more and listing the edges there.
+        for (long int from = 0; from < n; from++) {
+            // First, recover vertex description.
+            auto [v_perm, v_mem] = implicit_graph::get_vertex_information(from);
+            // Go through presentation edges first.
+            for (int j = 0; j < LISTSIZE; j++) {
+                auto [to, weight] = implicit_graph::presentation_edge(v_perm, v_mem, j);
+                if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
+                    fprintf(stderr, "Negative cycle found in the graph.\n");
+                    return;
+                }
             }
-        }
 
-        // Now repeat the BF procedure for translation edges.
-        for (int j = 0; j < LISTSIZE - 1; j++) {
-            auto [to, weight] = implicit_graph::translation_edge(v_perm, v_mem, j);
-            if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
-                fprintf(stderr, "Negative cycle found in the graph.\n");
-                return;
+            // Now repeat the BF procedure for translation edges.
+            for (int j = 0; j < LISTSIZE - 1; j++) {
+                auto [to, weight] = implicit_graph::translation_edge(v_perm, v_mem, j);
+                if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
+                    fprintf(stderr, "Negative cycle found in the graph.\n");
+                    return;
+                }
             }
         }
     }
 
-    fprintf(stderr, "No negative cycles present.\n");
+
+    if(!update_happened) {
+        fprintf(stderr, "No negative cycles present.\n");
+    }
     // print_array(n, reinterpret_cast<cost_t *>(distances));
     // write_distance_array(reinterpret_cast<cost_t *>(distances), n);
 

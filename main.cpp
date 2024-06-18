@@ -3,7 +3,7 @@
 #include "permutation_graph.hpp"
 #include "implicit_bellman_ford.hpp"
 
-int main(void) {
+int main() {
     // FILE *f = fopen("cmake-build-debug/graphdump.dot", "w");
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
