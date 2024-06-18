@@ -11,15 +11,15 @@
 class implicit_graph {
 public:
 
-    static std::pair<permutation, memory_pairs> get_vertex_information(long int vertex) {
+    static std::pair<array_as_permutation, MEMORY> get_vertex_information(long int vertex) {
         uint64_t memory_section = vertex % (MEMORY::max + 1);
         uint64_t permutation_section = vertex / (MEMORY::max + 1);
-        memory_pairs ret2; ret2.data = memory_section;
-        permutation ret1 = perm_from_index_quadratic(permutation_section);
+        MEMORY ret2; ret2.data = memory_section;
+        array_as_permutation ret1 = perm_from_index_quadratic(permutation_section);
         return {ret1, ret2};
     }
 
-    static std::pair<long int, cost_t> presentation_edge(permutation v_perm, memory_pairs v_mem, int presented_item ) {
+    static std::pair<long int, cost_t> presentation_edge(array_as_permutation v_perm, MEMORY v_mem, int presented_item ) {
 
         int alg_cost = ALG_SINGLE_STEP(&v_perm, &v_mem, presented_item); // v_perm will get edited.
         int opt_cost = presented_item;
@@ -27,9 +27,9 @@ public:
         return {target, EDGE_WEIGHT(opt_cost, alg_cost)};
     }
 
-    static std::pair<long int, cost_t> translation_edge(permutation v_perm, memory_pairs v_mem,
+    static std::pair<long int, cost_t> translation_edge(array_as_permutation v_perm, MEMORY v_mem,
                                                   int translation_index) {
-        permutation single_swap = IDENTITY;
+        array_as_permutation single_swap = IDENTITY;
         swap(&single_swap, translation_index);
 
         MEMORY mem_copy = v_mem.recompute(&single_swap);
@@ -129,7 +129,7 @@ public:
         return -1;
     }
 
-    static void vertex_print(long int id, array_as_permutation *p, memory_pairs *mem, FILE *f) {
+    static void vertex_print(long int id, array_as_permutation *p, MEMORY *mem, FILE *f) {
 
         fprintf(f, "%ld [label=\"%lu,", id, mem->data);
         print_permutation(p, f, false);

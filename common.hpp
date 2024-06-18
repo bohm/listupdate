@@ -25,7 +25,7 @@ constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
 // constexpr long double RATIO = 3.0;
-constexpr long double RATIO = 3.2;
+constexpr long double RATIO = 3.067;
 #define EDGE_WEIGHT edge_weight_param
 
 
