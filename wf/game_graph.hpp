@@ -15,9 +15,9 @@ public:
     wf_manager<SIZE> &wf;
 
     game_graph(wf_manager<SIZE> &w) : wf(w) {
-        advsize = wf.reachable_wfs.size()* factorial(SIZE);
+        advsize = wf.reachable_wfs.size()* factorial[SIZE];
         adv_vertices = new short[advsize];
-        algsize = wf.reachable_wfs.size() * factorial(SIZE) * SIZE;
+        algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
         alg_vertices = new short[algsize];
 
         for (int i = 0; i < algsize; i++) {
@@ -38,23 +38,23 @@ public:
 
 
     std::pair<unsigned long int, unsigned long int> decode_adv(uint64_t index) const {
-        return {index / factorial(SIZE), index % factorial(SIZE)};
+        return {index / factorial[SIZE], index % factorial[SIZE]};
     }
 
     uint64_t encode_adv(unsigned long int wf_index, unsigned long int perm_index) const {
-        return wf_index * factorial(SIZE) + perm_index;
+        return wf_index * factorial[SIZE] + perm_index;
     }
 
     std::tuple<unsigned long int, unsigned long int, unsigned long int> decode_alg(uint64_t index) const {
         unsigned long int request_index = index % SIZE;
         unsigned long int rest = index / SIZE;
-        unsigned long int perm_index = rest % factorial(SIZE);
-        unsigned long int wf_index = rest / factorial(SIZE);
+        unsigned long int perm_index = rest % factorial[SIZE];
+        unsigned long int wf_index = rest / factorial[SIZE];
         return {wf_index, perm_index, request_index};
     }
 
     uint64_t encode_alg(unsigned long int wf_index, unsigned long int perm_index, unsigned long int request_index) {
-        return wf_index * factorial(SIZE) * SIZE + perm_index * SIZE + request_index;
+        return wf_index * factorial[SIZE] * SIZE + perm_index * SIZE + request_index;
     }
 
     void print_adv(uint64_t index) const {
@@ -146,7 +146,7 @@ public:
             }
             short new_pot = std::numeric_limits<short>::max();
 
-            for (int p = 0; p < factorial(SIZE); p++) {
+            for (int p = 0; p < factorial[SIZE]; p++) {
                 uint64_t target_adv = encode_adv(wf_index, p);
                 short alg_cost_s = alg_cost(perm_index, p, req);
 
@@ -337,7 +337,7 @@ public:
         workfunction<SIZE>& workf = wf.reachable_wfs[wf_index];
         permutation<SIZE> perm = wf.pm.all_perms[perm_index];
         short m = std::numeric_limits<short>::min();
-        for (unsigned long p = 0; p < factorial(SIZE); p++) {
+        for (unsigned long p = 0; p < factorial[SIZE]; p++) {
             short inv = perm.inversions_wrt(&(wf.pm.all_perms[p]));
             if (2*inv - 3*workf.vals[p] > m)
             {
@@ -401,7 +401,7 @@ public:
                 // Main difference: we only expand on tight edges here.
                 // Compute the number of tight edges first. It slows down the printing, but nothing important.
                 unsigned long tight_size = 0;
-                for (unsigned long p = 0; p < factorial(SIZE); p++) {
+                for (unsigned long p = 0; p < factorial[SIZE]; p++) {
                     unsigned long next_adv_index = encode_adv(wf_index, p);
                     short alg_cost_s = alg_cost(perm_index, p, request);
                     if (adv_vertices[next_adv_index] + alg_cost_s == alg_vertices[index]) {
@@ -410,7 +410,7 @@ public:
                 }
 
                 unsigned long tight_index = 0;
-                for (unsigned long p = 0; p < factorial(SIZE); p++) {
+                for (unsigned long p = 0; p < factorial[SIZE]; p++) {
                     unsigned long next_adv_index = encode_adv(wf_index, p);
                     short alg_cost_s = alg_cost(perm_index, p, request);
                     if (adv_vertices[next_adv_index] + alg_cost_s == alg_vertices[index]) {

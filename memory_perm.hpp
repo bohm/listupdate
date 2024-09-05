@@ -14,7 +14,7 @@
 class memory_perm {
 public:
 
-    static constexpr uint64_t max = factorial(LISTSIZE)-1;
+    static constexpr uint64_t max = factorial[LISTSIZE]-1;
 
     uint64_t data = 0;
 

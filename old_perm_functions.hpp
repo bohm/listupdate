@@ -106,7 +106,7 @@ uint64_t lexindex_quadratic(array_as_permutation *perm) {
             relative_position = (*perm)[i];
         }
 
-        ret += relative_position*factorial(LISTSIZE-1-i);
+        ret += relative_position*factorial[LISTSIZE-1-i];
     }
 
     return ret;
@@ -118,7 +118,7 @@ array_as_permutation perm_from_index_quadratic(uint64_t index) {
     std::array<bool, LISTSIZE> placed{};
 
     for (int i = 0; i < LISTSIZE; i++) {
-        short relpos = (short) (index / factorial(LISTSIZE-i-1));
+        short relpos = (short) (index / factorial[LISTSIZE-i-1]);
         // fprintf(stderr, "Iteration %d: Computer relpos %hd.\n", i, relpos);
         short candidate = 0;
         // Compute the i-th unplaced number.
@@ -139,7 +139,7 @@ array_as_permutation perm_from_index_quadratic(uint64_t index) {
         ret[i] = candidate;
         placed[candidate] = true;
 
-        index %= factorial(LISTSIZE-i-1);
+        index %= factorial[LISTSIZE-i-1];
     }
 
     return ret;

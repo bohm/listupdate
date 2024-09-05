@@ -9,7 +9,7 @@
 #include "storage.hpp"
 
 void bellman_ford_compare_exchange() {
-    long unsigned int n = factorial(LISTSIZE) * (MEMORY::max + 1);
+    long unsigned int n = factorial[LISTSIZE] * (MEMORY::max + 1);
     fprintf(stderr, "There are %ld vertices in the graph.\n", n);
 
     std::atomic<cost_t> *distances;

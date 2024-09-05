@@ -26,8 +26,8 @@ int main() {
     alg_single_step_mru_minimize_inv(&one_data, &mem, 2);
 
     */
-    // create_graph();
-    // g.dfs_reachability();
+    create_graph();
+    g.dfs_reachability();
 
     // long int random_number=1202;
     // auto v = g.get_vert(random_number);
@@ -36,12 +36,12 @@ int main() {
     // print_graph(f);
     // fclose(f);
 
-    // bellman_ford();
+    bellman_ford();
     // fprintf(stderr, "---\n");
     // fprintf(stderr, "Implicit computation:\n");
     // bellman_ford_implicit();
     // bellman_ford_implicit_parallel();
-    bellman_ford_compare_exchange();
+    // bellman_ford_compare_exchange();
     // auto [distances_len, distances] = read_distance_array();
     // print_array(distances_len, distances);
     // delete distances;

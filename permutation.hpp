@@ -28,7 +28,7 @@ public:
                     relative_position = data[i];
                 }
 
-                ret += relative_position*factorial(SIZE-1-i);
+                ret += relative_position*factorial[SIZE-1-i];
             }
 
             return ret;
@@ -131,7 +131,7 @@ public:
         std::array<bool, SIZE> placed{};
 
         for (int i = 0; i < SIZE; i++) {
-            short relpos = (short) (index / factorial(SIZE-i-1));
+            short relpos = (short) (index / factorial[SIZE-i-1]);
             // fprintf(stderr, "Iteration %d: Computer relpos %hd.\n", i, relpos);
             short candidate = 0;
             // Compute the i-th unplaced number.
@@ -152,7 +152,7 @@ public:
             ret.data[i] = candidate;
             placed[candidate] = true;
 
-            index %= factorial(SIZE-i-1);
+            index %= factorial[SIZE-i-1];
         }
 
         return ret;

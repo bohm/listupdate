@@ -8,7 +8,7 @@
 using cost_t = float; // If memory is an issue, you can use this.
 
 
-#define TSIZE 7
+#define TSIZE 5
 
 constexpr int TESTSIZE = TSIZE;
 constexpr unsigned short LISTSIZE = TSIZE;
@@ -25,7 +25,7 @@ constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
 // constexpr long double RATIO = 3.0;
-constexpr long double RATIO = 3.067;
+constexpr long double RATIO = 3.06;
 #define EDGE_WEIGHT edge_weight_param
 
 
@@ -59,9 +59,19 @@ void print_array(unsigned long int len, cost_t *array) {
     fprintf(stderr, "]\n");
 }
 
-constexpr uint64_t factorial(uint64_t n) {
-    return n <= 1 ? 1 : (n* factorial(n-1));
+constexpr uint64_t fact(uint64_t n) {
+    return n <= 1 ? 1 : (n* fact(n-1));
 }
+
+static constexpr std::array<uint64_t, TESTSIZE+1> fact_array() {
+    std::array<uint64_t, TESTSIZE+1> ret{};
+    for (int i = 0; i <= TESTSIZE; i++) {
+        ret[i] = fact(i);
+    }
+    return ret;
+}
+
+constexpr std::array<uint64_t, TESTSIZE+1> factorial = fact_array();
 
 constexpr short diameter_bound(short n) {
     return (n*(n-1))/2;

@@ -14,7 +14,7 @@ template <int SIZE> class wf_manager {
 public:
     permutation_graph<SIZE>& pm;
 
-    std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial(SIZE)> zobrist;
+    std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial[SIZE]>* zobrist;
 
     std::vector<workfunction<SIZE>> reachable_wfs;
     std::vector<std::array<unsigned int, SIZE>> adjacent_functions;
@@ -22,7 +22,8 @@ public:
     std::unordered_map<uint64_t, unsigned int> hash_to_index;
     wf_manager(permutation_graph<SIZE> &p) : pm(p) {
 
-        for (int i = 0; i < factorial(SIZE); i++) {
+        zobrist = new std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial[SIZE]>;
+        for (int i = 0; i < factorial[SIZE]; i++) {
             for (int v = 0; v < diameter_bound(SIZE)+1; v++) {
                 zobrist[i][v] = rand_64bit();
             }
@@ -31,9 +32,13 @@ public:
         initialize_inversions();
     }
 
+    ~wf_manager() {
+        delete zobrist;
+    }
+
     static void initialize_inversions() {
         invs->vals[0] = 0;
-        for (int i = 1; i < factorial(TESTSIZE); i++) {
+        for (int i = 1; i < factorial[TESTSIZE]; i++) {
             invs->vals[i] = diameter_bound(TESTSIZE);
         }
 
@@ -41,21 +46,21 @@ public:
     }
 
     void flat_update(workfunction<SIZE> *wf, short req) {
-        for (int i = 0; i < factorial(SIZE); i++) {
+        for (int i = 0; i < factorial[SIZE]; i++) {
             wf->vals[i] += pm.all_perms[i].position(req);
         }
     }
 
     void cut_minimum(workfunction<SIZE> *wf) {
         short m = wf->min();
-        for (int i = 0; i < factorial(SIZE); i++) {
+        for (int i = 0; i < factorial[SIZE]; i++) {
             wf->vals[i] -= m;
         }
     }
 
     uint64_t hash(workfunction<SIZE> *wf) {
         uint64_t ret = 0;
-        for (int i = 0; i < factorial(SIZE); i++) {
+        for (int i = 0; i < factorial[SIZE]; i++) {
             ret ^= zobrist[i][wf->vals[i]];
         }
         return ret;
@@ -64,7 +69,7 @@ public:
     // Static, but requires the pg pointer to be populated.
     static void dynamic_update(workfunction<SIZE> *wf) {
         for (short value = 0; value < diameter_bound(SIZE); value++) {
-            for (int i = 0; i < factorial(SIZE); i++) {
+            for (int i = 0; i < factorial[SIZE]; i++) {
                 if (wf->vals[i] == value) {
                     for (uint64_t adj: pg->adjacencies[i]) {
                         wf->vals[adj] = std::min((short) (value+1), wf->vals[adj]);
@@ -96,6 +101,7 @@ public:
 
     // Counts reachable functions without initializing the full set of reachable functions.
     // Gentler on the memory, useful primarily for estimates.
+    /*
     uint64_t count_reachable() {
         double_zobrist<SIZE> dz;
         dz.init();
@@ -124,8 +130,11 @@ public:
 
         }
 
+
         return reachable_hashes.size();
     }
+
+    */
 
     void initialize_reachable() {
         std::unordered_set<uint64_t> reachable_hashes;

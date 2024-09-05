@@ -29,8 +29,8 @@ public:
         return ret;
     }
 
-    std::array<permutation<SIZE>, factorial(SIZE)> all_perms;
-    std::array<std::array<uint64_t, SIZE-1>, factorial(SIZE)> adjacencies;
+    std::array<permutation<SIZE>, factorial[SIZE]> all_perms;
+    std::array<std::array<uint64_t, SIZE-1>, factorial[SIZE]> adjacencies;
 
 
     // Lexicographically next permutation. Returns false if perm was the largest one.

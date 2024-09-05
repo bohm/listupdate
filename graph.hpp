@@ -21,7 +21,7 @@ class graph {
 public:
     uint64_t edgecounter = 0;
     uint64_t reachable_vertices = 0;
-    std::array<vert_container, factorial(LISTSIZE)> verts;
+    std::array<vert_container, factorial[LISTSIZE]> verts;
 
     adversary_vertex *get_vert(array_as_permutation *perm, MEMORY m) const
     {

@@ -10,7 +10,7 @@
 // and would slow us down if everything is reachable.
 
 void bellman_ford() {
-    long unsigned int n = factorial(LISTSIZE) * (MEMORY::max + 1);
+    long unsigned int n = factorial[LISTSIZE] * (MEMORY::max + 1);
     fprintf(stderr, "There are %ld vertices in the graph.\n", n);
     // long unsigned iteration_limit = n;
     long unsigned iteration_limit = g.reachable_vertices;

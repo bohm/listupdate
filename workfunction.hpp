@@ -5,7 +5,7 @@
 
 template <int SIZE> class workfunction {
 public:
-    std::array<short, factorial(SIZE)> vals;
+    std::array<short, factorial[SIZE]> vals;
 
     short min() const {
         return (*std::min_element(vals.begin(), vals.end()));
@@ -16,13 +16,13 @@ public:
     }
 
     void validate() const {
-        for (int i = 0; i < factorial(SIZE); i++) {
+        for (int i = 0; i < factorial[SIZE]; i++) {
             assert(vals[i] >= 0 && vals[i] <= diameter_bound(SIZE));
         }
     }
 
     void print() const {
-        for (int i = 0; i < factorial(SIZE); i++) {
+        for (int i = 0; i < factorial[SIZE]; i++) {
             fprintf(stderr, "wf[%d] = %hd.\n", i, vals[i]);
         }
     }
