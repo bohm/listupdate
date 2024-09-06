@@ -8,17 +8,20 @@
 #include "game_graph.hpp"
 
 int main() {
-    permutation_graph<TESTSIZE> pm{};
-    pm.populate_all_perms();
-    fprintf(stderr, "Total permutations %zu.\n", pm.all_perms.size());
-    for (auto & all_perm : pm.all_perms) {
+
+    pg = new permutation_graph<LISTSIZE>();
+    pg->init();
+
+    invs = new workfunction<LISTSIZE>{};
+    wf_manager<LISTSIZE>::initialize_inversions();
+
+    fprintf(stderr, "Total permutations %zu.\n", pg->all_perms.size());
+    for (auto & all_perm : pg->all_perms) {
         all_perm.print();
     }
 
-    pm.populate_adjacencies();
-    pm.print_adjacencies();
 
-    wf_manager<TESTSIZE> wm(pm);
+    wf_manager<TESTSIZE> wm(*pg);
 
     invs->print();
 
@@ -64,6 +67,6 @@ int main() {
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
-    g.print_potential();
+    // g.print_potential();
     return 0;
 }

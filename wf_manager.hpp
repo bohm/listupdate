@@ -22,10 +22,10 @@ public:
     std::unordered_map<uint64_t, unsigned int> hash_to_index;
     wf_manager(permutation_graph<SIZE> &p) : pm(p) {
 
-        zobrist = new std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial[SIZE]>;
+        zobrist = new std::array<std::array<uint64_t, diameter_bound(SIZE)+1>, factorial[SIZE]>();
         for (int i = 0; i < factorial[SIZE]; i++) {
             for (int v = 0; v < diameter_bound(SIZE)+1; v++) {
-                zobrist[i][v] = rand_64bit();
+		    (*zobrist)[i][v] = rand_64bit();
             }
         }
 
@@ -61,7 +61,7 @@ public:
     uint64_t hash(workfunction<SIZE> *wf) {
         uint64_t ret = 0;
         for (int i = 0; i < factorial[SIZE]; i++) {
-            ret ^= zobrist[i][wf->vals[i]];
+            ret ^= (*zobrist)[i][wf->vals[i]];
         }
         return ret;
     }
@@ -140,7 +140,7 @@ public:
         std::unordered_set<uint64_t> reachable_hashes;
         std::vector<std::array<uint64_t, SIZE>> adjacencies_by_hash;
 
-        workfunction<SIZE> initial = invs;
+        workfunction<SIZE> initial = *invs;
         std::queue<workfunction<SIZE>> q;
         reachable_hashes.insert(hash(&initial));
         q.push(initial);

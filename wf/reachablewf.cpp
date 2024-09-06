@@ -10,6 +10,8 @@
 int main()
 {
 
+    invs = new workfunction<LISTSIZE>{};
+    wf_manager<LISTSIZE>::initialize_inversions();
     permutation_graph<TESTSIZE> pm{};
     pm.populate_all_perms();
     fprintf(stderr, "Total permutations %zu.\n", pm.all_perms.size());

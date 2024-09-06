@@ -24,8 +24,8 @@ constexpr bool GRAPH_DEBUG = false;
 constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
-// constexpr long double RATIO = 3.0;
-constexpr long double RATIO = 3.06;
+constexpr long double RATIO = 3.0;
+// constexpr long double RATIO = 3.06;
 #define EDGE_WEIGHT edge_weight_param
 
 
