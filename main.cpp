@@ -23,7 +23,7 @@ int main() {
 
     memory_perm mem; mem.data = mru.id();
     std::array<short, 5> one_data = one.data;
-    alg_single_step_mru_minimize_inv(&one_data, &mem, 2);
+    alg_single_step_mru_eager(&one_data, &mem, 2);
 
     */
     create_graph();

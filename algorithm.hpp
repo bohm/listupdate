@@ -220,8 +220,43 @@ int alg_single_step_mru(array_as_permutation *perm, memory_perm *mem, unsigned s
     return alg_cost;
 }
 
+void alg_single_step_mru_eager_info(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item)
+{
 
-int alg_single_step_mru_minimize_inv(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
+    fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
+     fprintf(stderr, "Memory index %lu.\n", mem->data);
+
+
+    int alg_cost = 0;
+    int item_pos = 0;
+    uint64_t flag_cnt = 0;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            break;
+        }
+    }
+
+    alg_cost += item_pos;
+    // Compute the position of presented_item, include the search for it in alg_cost.
+
+    permutation<LISTSIZE> mru_memory = permutation<LISTSIZE>::perm_from_index_quadratic(mem->data);
+
+    // Compute the minimum inversion count.
+    int min_inversions_val = std::numeric_limits<int>::max();
+    int min_inversions_target = item_pos;
+
+    permutation<LISTSIZE> perm_object(*perm);
+    for (int move_target = item_pos; move_target >= 0; move_target-- ) {
+        // fprintf(stderr, "Swapping from %d to %d.\n", item_pos, move_target);
+        auto perm_after_move = perm_object.move_from_position_to_position(item_pos, move_target);
+        int inversions = perm_after_move.inversions_wrt(&mru_memory);
+
+        fprintf(stderr, "Candidate for a move (%d inversions): ", inversions);
+        perm_after_move.print();
+    }
+}
+
+int alg_single_step_mru_eager(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
         fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
         fprintf(stderr, "Memory index %lu.\n", mem->data);
@@ -266,6 +301,79 @@ int alg_single_step_mru_minimize_inv(array_as_permutation *perm, memory_perm *me
     }
 
     while (item_pos >= 1 && item_pos > min_inversions_target) {
+        swap(perm, item_pos-1);
+        alg_cost++;
+        item_pos--;
+    }
+
+    mem->mtf(presented_item);
+
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG's cost: %d.\n", alg_cost);
+    }
+    return alg_cost;
+}
+
+
+int alg_single_step_mru_semi_eager(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
+        fprintf(stderr, "Memory index %lu.\n", mem->data);
+        print_permutation_and_memory<memory_perm>(perm, *mem);
+    }
+
+    int alg_cost = 0;
+    int item_pos = 0;
+    uint64_t flag_cnt = 0;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            break;
+        }
+    }
+
+    alg_cost += item_pos;
+    // Compute the position of presented_item, include the search for it in alg_cost.
+
+
+    permutation<LISTSIZE> mru_memory = permutation<LISTSIZE>::perm_from_index_quadratic(mem->data);
+
+    // Compute the minimum inversion count.
+    int min_inversions_val = std::numeric_limits<int>::max();
+
+    permutation<LISTSIZE> perm_object(*perm);
+    for (int move_target = item_pos; move_target >= 0; move_target-- ) {
+        auto perm_after_move = perm_object.move_from_position_to_position(item_pos, move_target);
+        int inversions = perm_after_move.inversions_wrt(&mru_memory);
+
+        if (ALG_DEBUG) {
+            fprintf(stderr, "Candidate for a move (%d inversions): ", inversions);
+            perm_after_move.print();
+        }
+        if (inversions <= min_inversions_val) {
+            if(ALG_DEBUG) {
+                fprintf(stderr, "The number of inversions %d is lower than previous min of %d.\n",
+                        inversions, min_inversions_val);
+            }
+            min_inversions_val = inversions;
+        }
+    }
+
+    // If there are 3 or more choices with the same inversion count, choose the middle one.
+    // If there are two, we will lean towards eager.
+    std::array<int, LISTSIZE> choices = {0};
+    int c = 0;
+    for (int move_target = item_pos; move_target >= 0; move_target-- ) {
+        auto perm_after_move = perm_object.move_from_position_to_position(item_pos, move_target);
+        int inversions = perm_after_move.inversions_wrt(&mru_memory);
+        if (inversions == min_inversions_val) {
+            choices[c++] = move_target;
+        }
+    }
+
+    assert(c >= 1);
+    int semi_eager_target = choices[c/2];
+
+    while (item_pos >= 1 && item_pos > semi_eager_target) {
         swap(perm, item_pos-1);
         alg_cost++;
         item_pos--;

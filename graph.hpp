@@ -220,11 +220,15 @@ void print_vertex_sequence(std::vector<long int> seq) {
         v->print(stderr);
         fprintf(stderr, "Memory content for vertex %d/%zu:\n", counter, seq.size());
         v->mem.full_print();
+
         fprintf(stderr, "\n");
         if (counter < seq.size() - 1) {
             adversary_vertex *vnext = g.get_vert(seq[counter+1]);
             adv_outedge *e = locate_edge(v, vnext);
             e->print(stderr);
+            if (e->presented_item != -1) {
+                ALG_INFO(&(v->perm), &(v->mem), e->presented_item);
+            }
         }
     }
 }
