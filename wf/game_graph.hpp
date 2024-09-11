@@ -8,17 +8,21 @@ private:
     bool *alg_vertices_visited = nullptr;
     bool *adv_vertices_visited = nullptr;
 public:
-    short *alg_vertices = nullptr;
+    // short *alg_vertices = nullptr;
+    float *alg_vertices = nullptr;
     uint64_t algsize = 0;
-    short *adv_vertices = nullptr;
+    float *adv_vertices = nullptr;
+    // short *adv_vertices = nullptr;
     uint64_t advsize = 0;
     wf_manager<SIZE> &wf;
 
     game_graph(wf_manager<SIZE> &w) : wf(w) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
-        adv_vertices = new short[advsize];
+        // adv_vertices = new short[advsize];
+        adv_vertices = new float[advsize];
         algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
-        alg_vertices = new short[algsize];
+        // alg_vertices = new short[algsize];
+        alg_vertices = new float[algsize];
 
         for (int i = 0; i < algsize; i++) {
             alg_vertices[i] = 0;
@@ -73,7 +77,7 @@ public:
         // wf.reachable_wfs[wf_index].print();
     }
 
-    short adv_cost(unsigned int wf_index, short req) {
+    cost_t adv_cost(unsigned int wf_index, short req) {
         return RATIO*wf.update_cost(wf_index, req);
     }
 
@@ -83,8 +87,18 @@ public:
         return perm_one.position(req) + perm_one.inversions_wrt(perm_two);
     }
 
+    /*
     short min_adv_potential() {
         short m = std::numeric_limits<short>::max();
+        for (uint64_t index = 0; index < advsize; index++) {
+            m = std::min(m, adv_vertices[index]);
+        }
+        return m;
+    }
+     */
+
+    float min_adv_potential() {
+        float m = std::numeric_limits<float>::max();
         for (uint64_t index = 0; index < advsize; index++) {
             m = std::min(m, adv_vertices[index]);
         }
@@ -124,11 +138,11 @@ public:
                 print_adv(index);
             }
             workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
-            short new_pot = std::numeric_limits<short>::min();
+            cost_t new_pot = std::numeric_limits<cost_t>::min();
             for (int r = 0; r < SIZE; r++) {
                 uint64_t new_wf_index = wf.adjacency(wf_index, r);
                 uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
-                short adv_cost_s = adv_cost(wf_index, r);
+                cost_t adv_cost_s = adv_cost(wf_index, r);
                 if(GRAPH_DEBUG) {
                     fprintf(stderr, "ADV vertex %" PRIu64 " has request %d associated with cost %hd.\n",
                             index, r, adv_cost_s);
@@ -249,7 +263,7 @@ public:
 
 
 
-    bool update_alg_mtf() {
+    bool update_alg_mtf_of_request() {
         bool any_potential_changed = false;
 #pragma omp parallel for
         for (uint64_t index = 0; index < algsize; index++) {
@@ -261,29 +275,26 @@ public:
 
                 print_alg(index);
             }
-            short new_pot = std::numeric_limits<short>::max();
+            cost_t new_pot = std::numeric_limits<cost_t>::max();
 
-            // Instead of all choices, we only allow MTF choices.
-            for (short el = 0; el < SIZE; el++) {
-                unsigned long p = wf.pm.all_perms[perm_index].mtf_copy(el).id();
-                if(GRAPH_DEBUG) {
-                    fprintf(stderr, "alg%lu: Evaluating edge: ", index);
-                    wf.pm.all_perms[perm_index].print(stderr, false);
-                    fprintf(stderr, " -> ");
-                    wf.pm.all_perms[p].print();
-                }
-                uint64_t target_adv = encode_adv(wf_index, p);
-                short alg_cost_s = alg_cost(perm_index, p, req);
-
-                // ALG potential update.
-                if(GRAPH_DEBUG) {
-                    fprintf(stderr, "Phi_y (%hd) + c_xy  (%hd) = %hd.\n",
-                            adv_vertices[target_adv], alg_cost_s, adv_vertices[target_adv] + alg_cost_s);
-                }
-                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
-                    new_pot = adv_vertices[target_adv] + alg_cost_s;
-                }
+            // Instead of all choices, we only allow two MTF choices.
+            // STAY
+            unsigned long stay_perm_index = perm_index;
+            uint64_t target_adv = encode_adv(wf_index, stay_perm_index);
+            cost_t alg_cost_s = alg_cost(perm_index, stay_perm_index, req);
+            if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                new_pot = adv_vertices[target_adv] + alg_cost_s;
             }
+
+            // MTF
+
+            unsigned long mtf_perm_index = wf.pm.all_perms[perm_index].mtf_copy(req).id();
+            target_adv = encode_adv(wf_index, mtf_perm_index);
+            alg_cost_s = alg_cost(perm_index, mtf_perm_index, req);
+            if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                new_pot = adv_vertices[target_adv] + alg_cost_s;
+            }
+
 
             if (alg_vertices[index] != new_pot) {
                 any_potential_changed = true;
