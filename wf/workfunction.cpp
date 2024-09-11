@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <unordered_set>
 #include <queue>
-#include <format>
+// #include <format>
 #include "../permutation_graph.hpp"
 #include "../wf_manager.hpp"
 #include "../workfunction.hpp"
@@ -69,7 +69,7 @@ int main() {
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
-    std::string workfunctions_filename = std::format("wfs-{}.log", LISTSIZE);
+    // std::string workfunctions_filename = std::format("wfs-{}.log", LISTSIZE);
     // wm.print_reachable(workfunctions_filename);
     // g.print_potential();
     return 0;
