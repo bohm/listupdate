@@ -5,7 +5,7 @@
 
 // using cost_t = long int;
 // using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
-using cost_t = float; // If memory is an issue, you can use this.
+using cost_t = short; // If memory is an issue, you can use this.
 
 
 #define TSIZE 4
@@ -25,6 +25,7 @@ constexpr bool GRAPH_DEBUG = false;
 constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
+constexpr int MULTIPLIER = 100;
 constexpr long double RATIO = 3.31;
 // constexpr long double RATIO = 3.062;
 // constexpr long double RATIO = 3.039;

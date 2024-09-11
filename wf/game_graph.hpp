@@ -8,21 +8,17 @@ private:
     bool *alg_vertices_visited = nullptr;
     bool *adv_vertices_visited = nullptr;
 public:
-    // short *alg_vertices = nullptr;
-    float *alg_vertices = nullptr;
+    short *alg_vertices = nullptr;
     uint64_t algsize = 0;
-    float *adv_vertices = nullptr;
-    // short *adv_vertices = nullptr;
+    short *adv_vertices = nullptr;
     uint64_t advsize = 0;
     wf_manager<SIZE> &wf;
 
     game_graph(wf_manager<SIZE> &w) : wf(w) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
-        // adv_vertices = new short[advsize];
-        adv_vertices = new float[advsize];
+        adv_vertices = new short[advsize];
         algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
-        // alg_vertices = new short[algsize];
-        alg_vertices = new float[algsize];
+        alg_vertices = new short[algsize];
 
         for (int i = 0; i < algsize; i++) {
             alg_vertices[i] = 0;
@@ -78,13 +74,13 @@ public:
     }
 
     cost_t adv_cost(unsigned int wf_index, short req) {
-        return RATIO*wf.update_cost(wf_index, req);
+        return RATIO*MULTIPLIER*wf.update_cost(wf_index, req);
     }
 
     short alg_cost(unsigned int perm_index_one, unsigned int perm_index_two, short req) {
         const permutation<SIZE>& perm_one = wf.pm.all_perms[perm_index_one];
         const permutation<SIZE>* perm_two = &(wf.pm.all_perms[perm_index_two]);
-        return perm_one.position(req) + perm_one.inversions_wrt(perm_two);
+        return MULTIPLIER*(perm_one.position(req) + perm_one.inversions_wrt(perm_two));
     }
 
     /*
@@ -97,8 +93,8 @@ public:
     }
      */
 
-    float min_adv_potential() {
-        float m = std::numeric_limits<float>::max();
+    short min_adv_potential() {
+        short m = std::numeric_limits<short>::max();
         for (uint64_t index = 0; index < advsize; index++) {
             m = std::min(m, adv_vertices[index]);
         }
