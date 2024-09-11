@@ -8,7 +8,7 @@
 using cost_t = float; // If memory is an issue, you can use this.
 
 
-#define TSIZE 6
+#define TSIZE 5
 
 constexpr int TESTSIZE = TSIZE;
 constexpr unsigned short LISTSIZE = TSIZE;
@@ -17,8 +17,8 @@ constexpr unsigned short LISTSIZE = TSIZE;
 // #define ALG_SINGLE_STEP alg_single_step_xoror
 
 #define MEMORY memory_perm
-#define ALG_SINGLE_STEP alg_single_step_mru_eager
-#define ALG_INFO alg_single_step_mru_eager_info
+#define ALG_SINGLE_STEP alg_single_step_mru_first_inversion
+// #define ALG_INFO alg_single_step_mru_eager_info
 
 constexpr bool ALG_DEBUG = false;
 constexpr bool GRAPH_DEBUG = false;
@@ -26,7 +26,9 @@ constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
 constexpr long double RATIO = 3.0;
-// constexpr long double RATIO = 3.067;
+// constexpr long double RATIO = 3.062;
+// constexpr long double RATIO = 3.039;
+
 #define EDGE_WEIGHT edge_weight_param
 
 

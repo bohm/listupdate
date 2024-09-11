@@ -62,7 +62,7 @@ public:
         fprintf(stderr, "WF index %lu, perm_index %lu.\n", wf_index, perm_index);
         wf.pm.all_perms[perm_index].print();
         fprintf(stderr, "Work function %lu: \n", wf_index);
-        wf.reachable_wfs[wf_index].print();
+        // wf.reachable_wfs[wf_index].print();
     }
 
     void print_alg(uint64_t index) const {
@@ -70,7 +70,7 @@ public:
         fprintf(stderr, "ALG vertex: index %lu, perm_index %lu, request %lu.\n", wf_index, perm_index, req);
         wf.pm.all_perms[perm_index].print();
         fprintf(stderr, "Work function %lu: \n", wf_index);
-        wf.reachable_wfs[wf_index].print();
+        // wf.reachable_wfs[wf_index].print();
     }
 
     short adv_cost(unsigned int wf_index, short req) {
@@ -89,6 +89,28 @@ public:
             m = std::min(m, adv_vertices[index]);
         }
         return m;
+    }
+
+    unsigned int wfa_cost(unsigned long wf_index, permutation<LISTSIZE> *current_alg_pos, unsigned long perm_index) const {
+        permutation<LISTSIZE> perm = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
+        unsigned int wf_cost = wf.reachable_wfs[wf_index].vals[perm_index];
+        unsigned int transition_cost =  perm.inversions_wrt(current_alg_pos);
+        return wf_cost + transition_cost;
+    }
+
+    unsigned int workfunction_algorithm_minimum(unsigned long alg_index) const {
+        auto [wf_index, perm_index, request] = decode_alg(alg_index);
+
+        unsigned int minimum_wfa_cost = std::numeric_limits<unsigned int>::max();
+        permutation<LISTSIZE> current_alg_pos = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
+        for (unsigned int i = 0; i < factorial[LISTSIZE]; i++) {
+            unsigned int cost_for_i = wfa_cost(wf_index, &current_alg_pos, i);
+            if (cost_for_i < minimum_wfa_cost) {
+                minimum_wfa_cost = cost_for_i;
+            }
+        }
+
+        return minimum_wfa_cost;
     }
 
     bool update_adv() {
@@ -173,6 +195,58 @@ public:
 
         return any_potential_changed;
     }
+
+
+
+    bool update_alg_wfa() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++) {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            if(GRAPH_DEBUG) {
+                fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
+                                "%hd.\n",
+                        index, wf_index, perm_index, req);
+
+                print_alg(index);
+            }
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(index);
+            permutation<LISTSIZE> perm = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
+            for (int p = 0; p < factorial[SIZE]; p++) {
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, &perm, p);
+                if (wfa_cost_for_this_index > wfa_minimum_value) {
+                    continue;
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "Phi_y (%hd) + c_xy  (%hd) = %hd.\n",
+                            adv_vertices[target_adv], alg_cost_s, adv_vertices[target_adv] + alg_cost_s);
+                }
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ALG vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, alg_vertices[index], new_pot);
+                }
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
+
 
 
     bool update_alg_mtf() {
@@ -356,6 +430,8 @@ public:
         fprintf(stderr, "\n");
     }
 
+
+
     void print_potential() {
         adv_vertices_visited = new bool[advsize];
         for (int i = 0; i < advsize; i++) {
@@ -410,12 +486,22 @@ public:
                 }
 
                 unsigned long tight_index = 0;
+                permutation<LISTSIZE> current_alg_pos = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
+                unsigned long wfa_minimum = workfunction_algorithm_minimum(index);
                 for (unsigned long p = 0; p < factorial[SIZE]; p++) {
                     unsigned long next_adv_index = encode_adv(wf_index, p);
                     short alg_cost_s = alg_cost(perm_index, p, request);
                     if (adv_vertices[next_adv_index] + alg_cost_s == alg_vertices[index]) {
                         fprintf(stderr, "Tight edge %lu/%lu between alg%lu and adv%lu.",
                                 tight_index, tight_size, index, next_adv_index);
+                        unsigned long wfa_cost_for_this_move = wfa_cost(wf_index, &current_alg_pos, p);
+                        if (wfa_cost_for_this_move == wfa_minimum) {
+                            fprintf(stderr, " Minimum of WFA (%lu = %lu).",
+                                    wfa_cost_for_this_move, wfa_minimum);
+                        } else {
+                            fprintf(stderr, " Nonoptimal in terms of WFA (%lu != %lu).",
+                                    wfa_cost_for_this_move, wfa_minimum);
+                        }
 
                         if (p == perm_index) {
                             fprintf(stderr, " Stay: ");

@@ -227,7 +227,7 @@ void print_vertex_sequence(std::vector<long int> seq) {
             adv_outedge *e = locate_edge(v, vnext);
             e->print(stderr);
             if (e->presented_item != -1) {
-                ALG_INFO(&(v->perm), &(v->mem), e->presented_item);
+                // ALG_INFO(&(v->perm), &(v->mem), e->presented_item);
             }
         }
     }

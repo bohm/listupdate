@@ -17,7 +17,9 @@ add_executable(listupdate
         storage.hpp
         wf_manager.hpp
         memory_perm.hpp
-        iteration_over_memory.hpp)
+        iteration_over_memory.hpp
+        memory_cartesian.hpp
+)
 add_executable(permutation_test permutation_test.cpp)
 
 find_package(OpenMP)

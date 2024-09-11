@@ -21,9 +21,9 @@ public:
         }
     }
 
-    void print() const {
+    void print(FILE *outf = stderr) const {
         for (int i = 0; i < factorial[SIZE]; i++) {
-            fprintf(stderr, "wf[%d] = %hd.\n", i, vals[i]);
+            fprintf(outf, "wf[%d] = %hd.\n", i, vals[i]);
         }
     }
 };

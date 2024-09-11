@@ -386,3 +386,51 @@ int alg_single_step_mru_semi_eager(array_as_permutation *perm, memory_perm *mem,
     }
     return alg_cost;
 }
+
+
+int alg_single_step_mru_first_inversion(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
+        fprintf(stderr, "Memory index %lu.\n", mem->data);
+        print_permutation_and_memory<memory_perm>(perm, *mem);
+    }
+
+    int alg_cost = 0;
+    int item_pos = 0;
+    uint64_t flag_cnt = 0;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            break;
+        }
+    }
+
+    alg_cost += item_pos;
+    // Compute the position of presented_item, include the search for it in alg_cost.
+
+    permutation<LISTSIZE> mru_memory = permutation<LISTSIZE>::perm_from_index_quadratic(mem->data);
+    permutation<LISTSIZE> perm_object(*perm);
+
+    int first_inversion_target = item_pos;
+
+    for (int move_target = 0; move_target <= item_pos; move_target++) {
+        if (mru_memory.position(presented_item) < mru_memory.position(perm_object.data[move_target]))
+        {
+            first_inversion_target = move_target;
+            break;
+        }
+    }
+
+    while (item_pos >= 1 && item_pos > first_inversion_target) {
+        swap(perm, item_pos-1);
+        alg_cost++;
+        item_pos--;
+    }
+
+    mem->mtf(presented_item);
+
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG's cost: %d.\n", alg_cost);
+    }
+    return alg_cost;
+}
+

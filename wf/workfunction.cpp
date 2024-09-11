@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <unordered_set>
 #include <queue>
+#include <format>
 #include "../permutation_graph.hpp"
 #include "../wf_manager.hpp"
 #include "../workfunction.hpp"
@@ -57,7 +58,8 @@ int main() {
         // bool alg_updated = g.update_alg();
         //bool alg_updated = g.update_alg_mtf();
         // bool alg_updated = g.update_alg_single_swap();
-        bool alg_updated = g.update_alg_request_moves_forward();
+        //bool alg_updated = g.update_alg_request_moves_forward();
+        bool alg_updated = g.update_alg_wfa();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
@@ -67,6 +69,8 @@ int main() {
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
+    std::string workfunctions_filename = std::format("wfs-{}.log", LISTSIZE);
+    // wm.print_reachable(workfunctions_filename);
     // g.print_potential();
     return 0;
 }
