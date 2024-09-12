@@ -5,10 +5,10 @@
 
 // using cost_t = long int;
 // using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
-using cost_t = short; // If memory is an issue, you can use this.
+using cost_t = float; // If memory is an issue, you can use this.
 
 
-#define TSIZE 4
+#define TSIZE 3
 
 constexpr int TESTSIZE = TSIZE;
 constexpr unsigned short LISTSIZE = TSIZE;
@@ -17,7 +17,8 @@ constexpr unsigned short LISTSIZE = TSIZE;
 // #define ALG_SINGLE_STEP alg_single_step_xoror
 
 #define MEMORY memory_perm
-#define ALG_SINGLE_STEP alg_single_step_mru_first_inversion
+// #define ALG_SINGLE_STEP alg_single_step_mru_first_inversion
+#define ALG_SINGLE_STEP alg_single_step_lessrecent
 // #define ALG_INFO alg_single_step_mru_eager_info
 
 constexpr bool ALG_DEBUG = false;
@@ -26,7 +27,8 @@ constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
 constexpr int MULTIPLIER = 1;
-constexpr long double RATIO = 3.0;
+constexpr long double RATIO = 3.56;
+constexpr float RECENCY_RATIO = 0.75;
 // constexpr long double RATIO = 3.062;
 // constexpr long double RATIO = 3.039;
 
@@ -55,10 +57,10 @@ constexpr std::array<int, LISTSIZE*LISTSIZE> canonical_order = canonical_orderin
 constexpr uint64_t max_memory_pairs = (1LLU << (canonical_order[(LISTSIZE - 2) * LISTSIZE + (LISTSIZE - 1)] + 1)) - 1;
 
 
-void print_array(unsigned long int len, cost_t *array) {
+void print_array(unsigned long int len, short *array) {
     fprintf(stderr, "[");
     for (long int x = 0; x < len; x++) {
-        fprintf(stderr, "%f,", array[x]);
+        fprintf(stderr, "%hu,", array[x]);
     }
     fprintf(stderr, "]\n");
 }

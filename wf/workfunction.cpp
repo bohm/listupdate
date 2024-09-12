@@ -2,13 +2,13 @@
 #include <cstdio>
 #include <unordered_set>
 #include <queue>
-// #include <format>
 #include "../permutation_graph.hpp"
 #include "../wf_manager.hpp"
 #include "../workfunction.hpp"
 #include "game_graph.hpp"
 
 int main() {
+    std::string workfunctions_filename = std::string("wfs-") + std::to_string(LISTSIZE) + std::string(".log");
 
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
@@ -63,14 +63,16 @@ int main() {
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
+            wm.print_reachable(workfunctions_filename);
+            g.print_potential();
+
             return 0;
         }
         iter_count++;
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
-    // std::string workfunctions_filename = std::format("wfs-{}.log", LISTSIZE);
-    // wm.print_reachable(workfunctions_filename);
-    // g.print_potential();
+    wm.print_reachable(workfunctions_filename);
+    g.print_potential();
     return 0;
 }

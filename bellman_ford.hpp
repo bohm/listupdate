@@ -88,28 +88,39 @@ void bellman_ford() {
                 cost_t weight = EDGE_WEIGHT(edge);
                 if (distances[from] != (cost_t) INT64_MAX && distances[from] + weight < distances[to]) {
                     // negative_cycle_found = true;
-                    fprintf(stderr, "Negative cycle found in the graph. Relevant vertex with distance value %f:\n",
+                    fprintf(stderr, "Negative cycle_with_tail found in the graph. Relevant vertex with distance value %f:\n",
                             distances[from]);
                     edge->from->print(stderr);
                     fprintf(stderr, "Relevant vertex to with distance value %f:\n", distances[to]);
                     edge->to->print(stderr);
                     fprintf(stderr, "pred[from] = %ld.\n", pred[from]);
 
-                    // Build the negative cycle.
-                    std::vector<long int> cycle;
+                    // Build the negative cycle_with_tail.
+                    std::vector<long int> cycle_with_tail;
                     std::unordered_set<long int> visited;
 
-                    cycle.push_back((long int) from);
+                    cycle_with_tail.push_back((long int) from);
                     visited.insert((long int) from);
                     long int p = pred[from];
                     while (!visited.contains(p)) {
-                        cycle.push_back(p);
+                        cycle_with_tail.push_back(p);
                         visited.insert(p);
                         p = pred[p];
                     }
-                    cycle.push_back(p);
-                    fprintf(stderr, "One negative sequence (cycle with tail) has length %zu.\n", cycle.size());
-                    std::reverse(cycle.begin(), cycle.end());
+                    cycle_with_tail.push_back(p);
+                    std::reverse(cycle_with_tail.begin(), cycle_with_tail.end());
+                    // Until here, we get a cycle with a tail. We clean off the tail to have just the cycle.
+                    std::vector<long int> cycle;
+                    cycle.push_back(cycle_with_tail[0]);
+                    long int i = 1;
+                    while (cycle_with_tail[i] != cycle[0]) {
+                        cycle.push_back(cycle_with_tail[i++]);
+                    }
+                    cycle.push_back(cycle[0]);
+                    fprintf(stderr, "One negative sequence (cycle) has length %zu.\n", cycle.size());
+                    double acost = total_alg_cost(cycle);
+                    double ocost = total_opt_cost(cycle);
+                    fprintf(stderr, "alg cost: %F, opt cost %F, ratio %F.\n", acost, ocost, acost / ocost);
                     print_vertex_sequence(cycle);
 
                     free(pred);

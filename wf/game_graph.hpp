@@ -73,7 +73,7 @@ public:
         // wf.reachable_wfs[wf_index].print();
     }
 
-    cost_t adv_cost(unsigned int wf_index, short req) {
+    short adv_cost(unsigned int wf_index, short req) {
         return RATIO*MULTIPLIER*wf.update_cost(wf_index, req);
     }
 
@@ -132,11 +132,11 @@ public:
                 print_adv(index);
             }
             workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
-            cost_t new_pot = std::numeric_limits<cost_t>::min();
+            short new_pot = std::numeric_limits<short>::min();
             for (int r = 0; r < SIZE; r++) {
                 uint64_t new_wf_index = wf.adjacency(wf_index, r);
                 uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
-                cost_t adv_cost_s = adv_cost(wf_index, r);
+                short adv_cost_s = adv_cost(wf_index, r);
                 if(GRAPH_DEBUG) {
                     fprintf(stderr, "ADV vertex %" PRIu64 " has request %d associated with cost %hd.\n",
                             index, r, adv_cost_s);
@@ -169,7 +169,7 @@ public:
             auto [wf_index, perm_index, req] = decode_alg(index);
             if(GRAPH_DEBUG) {
                 fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
-                                "%hd.\n",
+                                "%lu.\n",
                         index, wf_index, perm_index, req);
 
                 print_alg(index);
@@ -211,13 +211,6 @@ public:
 #pragma omp parallel for
         for (uint64_t index = 0; index < algsize; index++) {
             auto [wf_index, perm_index, req] = decode_alg(index);
-            if(GRAPH_DEBUG) {
-                fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
-                                "%hd.\n",
-                        index, wf_index, perm_index, req);
-
-                print_alg(index);
-            }
             short new_pot = std::numeric_limits<short>::max();
 
             // Instead of any permutation, we filter those which have higher than minimum value of WFA.
@@ -268,13 +261,13 @@ public:
 
                 print_alg(index);
             }
-            cost_t new_pot = std::numeric_limits<cost_t>::max();
+            short new_pot = std::numeric_limits<short>::max();
 
             // Instead of all choices, we only allow two MTF choices.
             // STAY
             unsigned long stay_perm_index = perm_index;
             uint64_t target_adv = encode_adv(wf_index, stay_perm_index);
-            cost_t alg_cost_s = alg_cost(perm_index, stay_perm_index, req);
+            short alg_cost_s = alg_cost(perm_index, stay_perm_index, req);
             if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
                 new_pot = adv_vertices[target_adv] + alg_cost_s;
             }

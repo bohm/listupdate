@@ -233,6 +233,35 @@ void print_vertex_sequence(std::vector<long int> seq) {
     }
 }
 
+double total_alg_cost(std::vector<long int>& seq) {
+    double ret = 0;
+    for (int counter = 0; counter < seq.size(); counter++) {
+        adversary_vertex *v = g.get_vert(seq[counter]);
+        if (counter < seq.size() - 1) {
+            adversary_vertex *vnext = g.get_vert(seq[counter+1]);
+            adv_outedge *e = locate_edge(v, vnext);
+            ret += e->alg_cost;
+        }
+    }
+    return ret;
+}
+
+
+double total_opt_cost(std::vector<long int>& seq) {
+    double ret = 0;
+    for (int counter = 0; counter < seq.size(); counter++) {
+        adversary_vertex *v = g.get_vert(seq[counter]);
+        if (counter < seq.size() - 1) {
+            adversary_vertex *vnext = g.get_vert(seq[counter+1]);
+            adv_outedge *e = locate_edge(v, vnext);
+            ret += e->opt_cost;
+        }
+    }
+
+    return ret;
+
+}
+
 void graph::dfs_reachability() {
     // reachability_recursive(get_vert(0));
     reachability_nonrecursive(get_vert(0));

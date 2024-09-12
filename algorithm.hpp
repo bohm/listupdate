@@ -314,6 +314,66 @@ int alg_single_step_mru_eager(array_as_permutation *perm, memory_perm *mem, unsi
     return alg_cost;
 }
 
+// Recency algorith results:
+// n = 3: 3.25
+// n = 4: 3.56
+int alg_single_step_lessrecent(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG seeking item %d with state: ", presented_item);
+        fprintf(stderr, "Memory index %lu.\n", mem->data);
+        print_permutation_and_memory<memory_perm>(perm, *mem);
+    }
+
+    int alg_cost = 0;
+    int item_pos = 0;
+    uint64_t flag_cnt = 0;
+    for (; item_pos < LISTSIZE; item_pos++) {
+        if ((*perm)[item_pos] == presented_item) {
+            break;
+        }
+    }
+
+    alg_cost += item_pos;
+    // Compute the position of presented_item, include the search for it in alg_cost.
+
+    permutation<LISTSIZE> mru_memory = permutation<LISTSIZE>::perm_from_index_quadratic(mem->data);
+
+    permutation<LISTSIZE> perm_object(*perm);
+    // Compute how many elements in the list ahead of presented_item are less recent.
+    short request_mru_position = mru_memory.position(presented_item);
+    short less_recent = 0;
+
+    for (int prev_in_list = item_pos-1; prev_in_list >= 0; prev_in_list--) {
+        short prev_element_in_list = perm_object.data[prev_in_list];
+        if (mru_memory.position(prev_element_in_list) > request_mru_position) {
+            less_recent++;
+        }
+    }
+
+    float target_ratio = RECENCY_RATIO * (float) item_pos;
+
+    if ((float) less_recent >= target_ratio) {
+        // Move to front.
+        while (item_pos >= 1) {
+            swap(perm, item_pos-1);
+            alg_cost++;
+            item_pos--;
+        }
+    }
+
+    // Else do nothing.
+    mem->mtf(presented_item);
+
+    if (ALG_DEBUG) {
+        fprintf(stderr, "ALG's cost: %d.\n", alg_cost);
+    }
+    return alg_cost;
+}
+
+
+
+
+
 
 int alg_single_step_mru_semi_eager(array_as_permutation *perm, memory_perm *mem, unsigned short presented_item) {
     if (ALG_DEBUG) {
