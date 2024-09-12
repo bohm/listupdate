@@ -102,19 +102,17 @@ public:
     }
 
     unsigned int wfa_cost(unsigned long wf_index, permutation<LISTSIZE> *current_alg_pos, unsigned long perm_index) const {
-        permutation<LISTSIZE> perm = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
+        permutation<LISTSIZE>* perm = &(wf.pm.all_perms[perm_index]);
         unsigned int wf_cost = wf.reachable_wfs[wf_index].vals[perm_index];
-        unsigned int transition_cost =  perm.inversions_wrt(current_alg_pos);
+        unsigned int transition_cost =  perm->inversions_wrt(current_alg_pos);
         return wf_cost + transition_cost;
     }
 
-    unsigned int workfunction_algorithm_minimum(unsigned long alg_index) const {
-        auto [wf_index, perm_index, request] = decode_alg(alg_index);
-
+    unsigned int workfunction_algorithm_minimum(unsigned long wf_index, unsigned long perm_index, short request) const {
         unsigned int minimum_wfa_cost = std::numeric_limits<unsigned int>::max();
-        permutation<LISTSIZE> current_alg_pos = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
+        permutation<LISTSIZE>* current_alg_pos = &(wf.pm.all_perms[perm_index]);
         for (unsigned int i = 0; i < factorial[LISTSIZE]; i++) {
-            unsigned int cost_for_i = wfa_cost(wf_index, &current_alg_pos, i);
+            unsigned int cost_for_i = wfa_cost(wf_index, current_alg_pos, i);
             if (cost_for_i < minimum_wfa_cost) {
                 minimum_wfa_cost = cost_for_i;
             }
@@ -223,10 +221,9 @@ public:
             short new_pot = std::numeric_limits<short>::max();
 
             // Instead of any permutation, we filter those which have higher than minimum value of WFA.
-            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(index);
-            permutation<LISTSIZE> perm = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
+            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index, req);
             for (int p = 0; p < factorial[SIZE]; p++) {
-                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, &perm, p);
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, &(wf.pm.all_perms[perm_index]), p);
                 if (wfa_cost_for_this_index > wfa_minimum_value) {
                     continue;
                 }
@@ -493,8 +490,8 @@ public:
                 }
 
                 unsigned long tight_index = 0;
-                permutation<LISTSIZE> current_alg_pos = permutation<LISTSIZE>::perm_from_index_quadratic(perm_index);
-                unsigned long wfa_minimum = workfunction_algorithm_minimum(index);
+                permutation<LISTSIZE> current_alg_pos = wf.pm.all_perms[perm_index];
+                unsigned long wfa_minimum = workfunction_algorithm_minimum(wf_index, perm_index, request);
                 for (unsigned long p = 0; p < factorial[SIZE]; p++) {
                     unsigned long next_adv_index = encode_adv(wf_index, p);
                     short alg_cost_s = alg_cost(perm_index, p, request);

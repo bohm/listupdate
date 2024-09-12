@@ -25,8 +25,8 @@ constexpr bool GRAPH_DEBUG = false;
 constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
-constexpr int MULTIPLIER = 100;
-constexpr long double RATIO = 3.31;
+constexpr int MULTIPLIER = 1;
+constexpr long double RATIO = 3.0;
 // constexpr long double RATIO = 3.062;
 // constexpr long double RATIO = 3.039;
 

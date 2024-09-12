@@ -56,10 +56,10 @@ int main() {
         //}
         bool adv_updated = g.update_adv();
         // bool alg_updated = g.update_alg();
-        bool alg_updated = g.update_alg_mtf_of_request();
+        // bool alg_updated = g.update_alg_mtf_of_request();
         // bool alg_updated = g.update_alg_single_swap();
-        //bool alg_updated = g.update_alg_request_moves_forward();
-        // bool alg_updated = g.update_alg_wfa();
+        // bool alg_updated = g.update_alg_request_moves_forward();
+        bool alg_updated = g.update_alg_wfa();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
