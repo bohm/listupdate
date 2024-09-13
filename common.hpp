@@ -8,7 +8,7 @@
 using cost_t = float; // If memory is an issue, you can use this.
 
 
-#define TSIZE 3
+#define TSIZE 7
 
 constexpr int TESTSIZE = TSIZE;
 constexpr unsigned short LISTSIZE = TSIZE;
@@ -27,8 +27,8 @@ constexpr bool FRONT_ACCESS_COSTS_ONE = false;
 
 constexpr float EPSILON = 0.0001;
 constexpr int MULTIPLIER = 1;
-constexpr long double RATIO = 3.56;
-constexpr float RECENCY_RATIO = 0.75;
+constexpr long double RATIO = 3.556;
+constexpr float RECENCY_RATIO = 0.6;
 // constexpr long double RATIO = 3.062;
 // constexpr long double RATIO = 3.039;
 
