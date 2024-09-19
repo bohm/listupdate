@@ -89,6 +89,14 @@ public:
         return move_from_position_to_position(pos, target_pos);
     }
 
+    permutation<SIZE> compose_right(const permutation<SIZE>& right_perm) const {
+        permutation<SIZE> ret;
+        for (int i = 0; i < SIZE; i++) {
+            ret.data[i] = data[right_perm.data[i]];
+        }
+        return ret;
+    }
+
     void mtf_inplace(short element) {
         move_forward_inplace(element, 0);
     }

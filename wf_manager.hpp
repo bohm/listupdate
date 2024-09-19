@@ -66,6 +66,49 @@ public:
         return ret;
     }
 
+    // We use one permutation as a symmetry of the permutahedron to compute
+    // what the hash of the symmetric workfunction to the current one is.
+    uint64_t hash_under_right_composition(const workfunction<SIZE> *wf, uint64_t perm_id) const {
+        uint64_t h = 0;
+        for (int i = 0; i < factorial[SIZE]; i++) {
+            h ^= (*zobrist)[pm.quick_compose_right(perm_id, i)][wf->vals[i]];
+        }
+        return h;
+    }
+
+    // First apply the right composition, the mirror using the inverse permutation from the left.
+    // The inverse permutation should be the one with id factorial[SIZE]-1.
+    uint64_t hash_under_mirrored_composition(const workfunction<SIZE> *wf, uint64_t perm_id) const {
+        uint64_t h = 0;
+        for (int i = 0; i < factorial[SIZE]; i++) {
+            uint64_t compose_and_mirror = pm.quick_compose_left(factorial[SIZE]-1, pm.quick_compose_right(perm_id, i));
+            h ^= (*zobrist)[compose_and_mirror][wf->vals[i]];
+        }
+        return h;
+    }
+
+    // Two functions used primarily to test the above functions.
+
+    workfunction<SIZE> right_composition(const workfunction<SIZE> *wf, uint64_t perm_id) {
+        workfunction<SIZE> ret;
+        for (int i = 0; i < factorial[SIZE]; i++) {
+            // ret.vals[i] = wf->vals[pm.quick_compose_right(perm_id, i)];
+            ret.vals[pm.quick_compose_right(perm_id, i)] = wf->vals[i];
+        }
+        return ret;
+    }
+
+    workfunction<SIZE> mirrored_composition(const workfunction<SIZE> *wf, uint64_t perm_id) {
+        workfunction<SIZE> ret;
+        for (int i = 0; i < factorial[SIZE]; i++) {
+            uint64_t compose_and_mirror = pm.quick_compose_left(factorial[SIZE]-1, pm.quick_compose_right(perm_id, i));
+            // ret.vals[i] = wf->vals[compose_and_mirror];
+            ret.vals[compose_and_mirror] = wf->vals[i];
+        }
+        return ret;
+    }
+
+
     // Static, but requires the pg pointer to be populated.
     static void dynamic_update(workfunction<SIZE> *wf) {
         for (short value = 0; value < diameter_bound(SIZE); value++) {
@@ -99,18 +142,48 @@ public:
         return min_update_costs[wf_index][request];
     }
 
+    void print_all_symmetries(const workfunction<SIZE> *wf) {
+        for (unsigned long i = 0; i < factorial[SIZE]; i++) {
+            fprintf(stderr, "Composition with permutation %lu:\n", i);
+            right_composition(wf, i).print();
+            fprintf(stderr, "Composition and mirror with permutation %lu:\n", i);
+            mirrored_composition(wf, i).print();
+        }
+    }
+    bool any_symmetry_in_reachable(const workfunction<SIZE> *new_wf,
+                                   const std::unordered_set<uint64_t>& reachable_hashes) {
+        for (unsigned long i = 0; i < factorial[SIZE]; i++) {
+            uint64_t hash_projection = hash_under_right_composition(new_wf, i);
+            workfunction<SIZE> tmp = right_composition(new_wf, i);
+            assert(hash_projection == hash(&tmp)); // Debug.
+            if (reachable_hashes.contains(hash_projection)) {
+                return true;
+            }
+            uint64_t hash_projection_and_mirror = hash_under_mirrored_composition(new_wf, i);
+            tmp = mirrored_composition(new_wf, i);
+            assert(hash_projection_and_mirror == hash(&tmp)); // Debug.
+
+            if (reachable_hashes.contains(hash_projection_and_mirror)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // Counts reachable functions without initializing the full set of reachable functions.
     // Gentler on the memory, useful primarily for estimates.
-    /*
+
     uint64_t count_reachable() {
-        double_zobrist<SIZE> dz;
-        dz.init();
-        std::unordered_set<double_hashed_el> reachable_hashes;
-        // phmap::flat_hash_set<double_hashed_el> reachable_hashes;
+        std::unordered_set<uint64_t> reachable_hashes;
+        // phmap::flat_hash_set<uint64_t> reachable_hashes;
         workfunction<SIZE> initial = *invs;
         std::queue<workfunction<SIZE>> q;
-        reachable_hashes.insert(dz.hash(&initial));
+        reachable_hashes.insert(hash(&initial));
         q.push(initial);
+        // Debug
+        // print_all_symmetries(&initial);
+
         while (!q.empty()) {
             workfunction<SIZE> front = q.front();
             q.pop();
@@ -121,8 +194,12 @@ public:
                 flat_update(&new_wf, req);
                 cut_minimum(&new_wf);
                 dynamic_update(&new_wf);
-                double_hashed_el h = dz.hash(&new_wf);
-                if (!reachable_hashes.contains(h)) {
+                uint64_t h = hash(&new_wf);
+                // if (!reachable_hashes.contains(h)) {
+                if (!any_symmetry_in_reachable(&new_wf, reachable_hashes)) {
+                    // fprintf(stderr, "New reachable work function found:\n");
+                    // new_wf.print();
+                    // fprintf(stderr, "---\n");
                     reachable_hashes.insert(h);
                     q.push(new_wf);
                 }
@@ -134,7 +211,7 @@ public:
         return reachable_hashes.size();
     }
 
-    */
+
 
     void initialize_reachable() {
         std::unordered_set<uint64_t> reachable_hashes;

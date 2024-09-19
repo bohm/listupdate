@@ -31,7 +31,7 @@ public:
 
     std::array<permutation<SIZE>, factorial[SIZE]> all_perms;
     std::array<std::array<uint64_t, SIZE-1>, factorial[SIZE]> adjacencies;
-
+    std::array<std::array<uint64_t, factorial[SIZE]>, factorial[SIZE]> right_composition;
 
     // Lexicographically next permutation. Returns false if perm was the largest one.
     // Knuth's algorithm.
@@ -86,6 +86,23 @@ public:
                 adjacencies[i][swap] = swapped_id;
             }
         }
+    }
+
+    void populate_composition() {
+        for (int i = 0; i < all_perms.size(); i++) {
+            for (int j = 0; j < all_perms.size(); j++) {
+                uint64_t resulting_permutation_id = all_perms[i].compose_right(all_perms[j]).id();
+                right_composition[i][j] = resulting_permutation_id;
+            }
+        }
+    }
+
+    uint64_t quick_compose_right(uint64_t left_perm_id, uint64_t right_perm_id) {
+        return right_composition[left_perm_id][right_perm_id];
+    }
+
+    uint64_t quick_compose_left(uint64_t left_perm_id, uint64_t right_perm_id) {
+        return right_composition[right_perm_id][left_perm_id];
     }
 
     void print_adjacencies() const {
