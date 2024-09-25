@@ -191,7 +191,7 @@ public:
 
     uint64_t count_reachable() {
         // std::unordered_set<uint64_t> reachable_hashes;
-        char_flat_set reachable_hashes(33);
+        char_flat_set reachable_hashes(35);
 
         // phmap::flat_hash_set<uint64_t> reachable_hashes;
         workfunction<SIZE> initial = *invs;
@@ -219,6 +219,11 @@ public:
                     // fprintf(stderr, "---\n");
                     reachable_hashes.insert(h);
                     q.push(new_wf);
+                    if(reachable_hashes.insertions % 1000000 == 0) {
+                        fprintf(stderr, "Reachable hashes now %lu, queue size %zu.\n", reachable_hashes.insertions,
+                                q.size());
+                    }
+
                 }
             }
 
