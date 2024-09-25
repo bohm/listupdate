@@ -131,7 +131,7 @@ public:
                     index, wf_index, perm_index);
                 print_adv(index);
             }
-            workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
+            // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
             short new_pot = std::numeric_limits<short>::min();
             for (int r = 0; r < SIZE; r++) {
                 uint64_t new_wf_index = wf.adjacency(wf_index, r);

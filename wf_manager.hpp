@@ -8,6 +8,7 @@
 #include "workfunction.hpp"
 #include "parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
 #include "wf/double_zobrist.hpp"
+#include "caches/char_flat_set.hpp"
 
 
 template <int SIZE> class wf_manager {
@@ -58,12 +59,26 @@ public:
         }
     }
 
+    // NEW: our hash now never allows the final byte to be 0000. This way we lose some precision, but we make sure
+    // that the hash set only reports actual collisions, not false positives with 0000.
+
+    // This change needs to reflect in the other hash functions too.
+
+    static inline uint64_t avoid_0000(uint64_t hash_candidate) {
+        unsigned char last_byte = (unsigned char) hash_candidate;
+        if (last_byte != 0) {
+            return hash_candidate;
+        } else {
+            return hash_candidate | (uint64_t) 1;
+        }
+    }
+
     uint64_t hash(workfunction<SIZE> *wf) {
         uint64_t ret = 0;
         for (int i = 0; i < factorial[SIZE]; i++) {
             ret ^= (*zobrist)[i][wf->vals[i]];
         }
-        return ret;
+        return avoid_0000(ret);
     }
 
     // We use one permutation as a symmetry of the permutahedron to compute
@@ -73,7 +88,7 @@ public:
         for (int i = 0; i < factorial[SIZE]; i++) {
             h ^= (*zobrist)[pm.quick_compose_right(perm_id, i)][wf->vals[i]];
         }
-        return h;
+        return avoid_0000(h);
     }
 
     // First apply the right composition, the mirror using the inverse permutation from the left.
@@ -84,7 +99,7 @@ public:
             uint64_t compose_and_mirror = pm.quick_compose_left(factorial[SIZE]-1, pm.quick_compose_right(perm_id, i));
             h ^= (*zobrist)[compose_and_mirror][wf->vals[i]];
         }
-        return h;
+        return avoid_0000(h);
     }
 
     // Two functions used primarily to test the above functions.
@@ -151,7 +166,7 @@ public:
         }
     }
     bool any_symmetry_in_reachable(const workfunction<SIZE> *new_wf,
-                                   const std::unordered_set<uint64_t>& reachable_hashes) {
+                                   const char_flat_set& reachable_hashes) {
         for (unsigned long i = 0; i < factorial[SIZE]; i++) {
             uint64_t hash_projection = hash_under_right_composition(new_wf, i);
             workfunction<SIZE> tmp = right_composition(new_wf, i);
@@ -175,7 +190,9 @@ public:
     // Gentler on the memory, useful primarily for estimates.
 
     uint64_t count_reachable() {
-        std::unordered_set<uint64_t> reachable_hashes;
+        // std::unordered_set<uint64_t> reachable_hashes;
+        char_flat_set reachable_hashes(33);
+
         // phmap::flat_hash_set<uint64_t> reachable_hashes;
         workfunction<SIZE> initial = *invs;
         std::queue<workfunction<SIZE>> q;
@@ -207,14 +224,15 @@ public:
 
         }
 
-
-        return reachable_hashes.size();
+        reachable_hashes.report_collisions();
+        return reachable_hashes.insertions;
     }
 
 
 
     void initialize_reachable() {
         std::unordered_set<uint64_t> reachable_hashes;
+
         std::vector<std::array<uint64_t, SIZE>> adjacencies_by_hash;
 
         workfunction<SIZE> initial = *invs;

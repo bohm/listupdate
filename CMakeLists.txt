@@ -30,4 +30,6 @@ add_executable(workfunction wf/workfunction.cpp
         wf/game_graph.hpp
         wf/double_zobrist.hpp)
 add_executable(reachablewf wf/reachablewf.cpp
-        wf/double_zobrist.hpp)
+        wf/double_zobrist.hpp
+        wf/potential_updates.hpp
+        caches/char_flat_set.hpp)
