@@ -65,8 +65,8 @@ public:
         return m;
     }
 
-    void full_print() {
+    void full_print(FILE *f = stderr, bool newline = true) const {
         auto perm = permutation<LISTSIZE>::perm_from_index_quadratic(data);
-        perm.print();
+        perm.print(f, newline);
     }
 };

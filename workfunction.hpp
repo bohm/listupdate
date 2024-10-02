@@ -29,3 +29,4 @@ public:
 };
 
 workfunction<TESTSIZE> *invs = nullptr;
+bool inversions_ready = false;

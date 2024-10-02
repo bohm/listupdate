@@ -19,6 +19,7 @@ add_executable(listupdate
         memory_perm.hpp
         iteration_over_memory.hpp
         memory_cartesian.hpp
+        graphs/graph_bipartite_mru.hpp
 )
 add_executable(permutation_test permutation_test.cpp)
 
@@ -33,3 +34,5 @@ add_executable(reachablewf wf/reachablewf.cpp
         wf/double_zobrist.hpp
         wf/potential_updates.hpp
         caches/char_flat_set.hpp)
+add_executable(graph_test graph_test.cpp
+        graphs/bip_mru_potentials.hpp)

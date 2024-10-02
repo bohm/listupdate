@@ -38,12 +38,15 @@ public:
     }
 
     static void initialize_inversions() {
-        invs->vals[0] = 0;
-        for (int i = 1; i < factorial[TESTSIZE]; i++) {
-            invs->vals[i] = diameter_bound(TESTSIZE);
-        }
+        if(!inversions_ready) {
+            invs->vals[0] = 0;
+            for (int i = 1; i < factorial[TESTSIZE]; i++) {
+                invs->vals[i] = diameter_bound(TESTSIZE);
+            }
 
-        dynamic_update(invs);
+            dynamic_update(invs);
+        }
+        inversions_ready = true;
     }
 
     void flat_update(workfunction<SIZE> *wf, short req) {
@@ -191,7 +194,7 @@ public:
 
     uint64_t count_reachable() {
         // std::unordered_set<uint64_t> reachable_hashes;
-        char_flat_set reachable_hashes(35);
+        char_flat_set reachable_hashes(34);
 
         // phmap::flat_hash_set<uint64_t> reachable_hashes;
         workfunction<SIZE> initial = *invs;
@@ -219,7 +222,7 @@ public:
                     // fprintf(stderr, "---\n");
                     reachable_hashes.insert(h);
                     q.push(new_wf);
-                    if(reachable_hashes.insertions % 1000000 == 0) {
+                    if(reachable_hashes.insertions % 1000 == 0) {
                         fprintf(stderr, "Reachable hashes now %lu, queue size %zu.\n", reachable_hashes.insertions,
                                 q.size());
                     }
