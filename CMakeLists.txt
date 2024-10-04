@@ -32,7 +32,6 @@ add_executable(workfunction wf/workfunction.cpp
         wf/double_zobrist.hpp)
 add_executable(reachablewf wf/reachablewf.cpp
         wf/double_zobrist.hpp
-        wf/potential_updates.hpp
         data_structures/char_flat_set.hpp)
 add_executable(graph_test graph_test.cpp
         graphs/bip_mru_potentials.hpp)

@@ -8,7 +8,7 @@
 
 class file_based_queue {
 public:
-    static constexpr int BUF_WORKFUNCTIONS = 100;
+    static constexpr int BUF_WORKFUNCTIONS = 10000;
     static constexpr unsigned int BUF_CAPACITY = (factorial[LISTSIZE]+1)*BUF_WORKFUNCTIONS;
     FILE *reading = nullptr;
     FILE *appending = nullptr;
@@ -21,11 +21,13 @@ public:
     int read_buffer_pos = 0;
     int read_buffer_fill = 0;
     int write_buffer_pos = 0;
+    uint64_t total_shorts_written = 0; // A debug variable.
 
     explicit file_based_queue(std::string fname) {
         filename = fname;
         appending = fopen(fname.c_str(), "wb");
         reading = fopen(fname.c_str(), "rb");
+        setvbuf(reading, NULL, _IONBF, 0);
         assert(reading != nullptr);
         assert(appending != nullptr);
 
@@ -37,9 +39,16 @@ public:
         if (succ_read_shorts % (factorial[LISTSIZE]+1) != 0) {
             fprintf(stderr, "Successfully read %zu shorts, but expected to read a multiple of %lu.\n", succ_read_shorts,
                     factorial[LISTSIZE]+1);
+            if (feof(reading)) {
+                fprintf(stderr, "Reason: end of file.\n");
+            } else if (ferror(reading)) {
+                fprintf(stderr, "Reason: stream error %d.\n", ferror(reading));
+            } else {
+                fprintf(stderr, "Reason: not end of file and not a stream error. Hmm...\n");
+            }
             abort();
         } else {
-            fprintf(stderr, "Successfully read %zu shorts, 0 mod %lu.\n", succ_read_shorts, factorial[LISTSIZE]+1);
+            // fprintf(stderr, "Successfully read %zu shorts, 0 mod %lu.\n", succ_read_shorts, factorial[LISTSIZE]+1);
         }
         read_buffer_fill = (int) succ_read_shorts;
         read_buffer_pos = 0;
@@ -50,8 +59,8 @@ public:
         if (written != write_buffer_pos) {
             PRINT_AND_ABORT("Buffered write failed: not all shorts got written.\n");
         } else {
-            fprintf(stderr, "Written %d (%lu mod %lu) shorts from the buffer.\n", write_buffer_pos,
-                    write_buffer_pos % (factorial[LISTSIZE]+1), factorial[LISTSIZE]+1);
+            // fprintf(stderr, "Written %d (%lu mod %lu) shorts from the buffer.\n", write_buffer_pos,
+            //        write_buffer_pos % (factorial[LISTSIZE]+1), factorial[LISTSIZE]+1);
         }
         write_buffer_pos = 0;
         fflush(appending);

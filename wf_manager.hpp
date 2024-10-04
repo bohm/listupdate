@@ -6,7 +6,7 @@
 #include <queue>
 #include "permutation_graph.hpp"
 #include "workfunction.hpp"
-#include "parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
+//#include "parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
 #include "wf/double_zobrist.hpp"
 #include "data_structures/char_flat_set.hpp"
 #include "data_structures/file_based_queue.hpp"
@@ -195,7 +195,7 @@ public:
 
     uint64_t count_reachable() {
         // std::unordered_set<uint64_t> reachable_hashes;
-        char_flat_set reachable_hashes(34);
+        char_flat_set reachable_hashes(35);
 
         // phmap::flat_hash_set<uint64_t> reachable_hashes;
         workfunction<SIZE> initial = *invs;
