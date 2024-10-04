@@ -8,7 +8,7 @@
 using cost_t = float; // If memory is an issue, you can use this.
 
 
-#define TSIZE 3
+#define TSIZE 5
 
 constexpr int TESTSIZE = TSIZE;
 constexpr unsigned short LISTSIZE = TSIZE;

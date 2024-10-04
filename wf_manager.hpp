@@ -8,7 +8,8 @@
 #include "workfunction.hpp"
 #include "parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
 #include "wf/double_zobrist.hpp"
-#include "caches/char_flat_set.hpp"
+#include "data_structures/char_flat_set.hpp"
+#include "data_structures/file_based_queue.hpp"
 
 
 template <int SIZE> class wf_manager {
@@ -199,18 +200,21 @@ public:
         // phmap::flat_hash_set<uint64_t> reachable_hashes;
         workfunction<SIZE> initial = *invs;
         std::queue<workfunction<SIZE>> q;
+        file_based_queue fbq(std::string("queue.bin"));
+
         reachable_hashes.insert(hash(&initial));
-        q.push(initial);
+        fbq.push(&initial);
+        // q.push(initial);
         // Debug
         // print_all_symmetries(&initial);
 
-        while (!q.empty()) {
-            workfunction<SIZE> front = q.front();
-            q.pop();
-            reachable_wfs.push_back(front);
-
+        while (!fbq.empty()) {
+            // workfunction<SIZE> front = q.front();
+            // q.pop();
+            workfunction<SIZE> *front = fbq.pop_nonblocking();
+            // front->print(stderr);
             for (short req = 0; req < SIZE; req++) {
-                workfunction<SIZE> new_wf = front;
+                workfunction<SIZE> new_wf = *front;
                 flat_update(&new_wf, req);
                 cut_minimum(&new_wf);
                 dynamic_update(&new_wf);
@@ -221,15 +225,15 @@ public:
                     // new_wf.print();
                     // fprintf(stderr, "---\n");
                     reachable_hashes.insert(h);
-                    q.push(new_wf);
+                    fbq.push(&new_wf);
                     if(reachable_hashes.insertions % 1000 == 0) {
                         fprintf(stderr, "Reachable hashes now %lu, queue size %zu.\n", reachable_hashes.insertions,
-                                q.size());
+                                fbq.size());
                     }
 
                 }
             }
-
+            delete front;
         }
 
         reachable_hashes.report_collisions();
