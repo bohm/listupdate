@@ -30,7 +30,8 @@ int main() {
         //}
         bool adv_updated = pots.update_adv();
         // bool alg_updated = pots.update_alg();
-        bool alg_updated = pots.update_alg_equivalence_classes();
+        // bool alg_updated = pots.update_alg_equivalence_classes();
+        bool alg_updated = pots.update_alg_frequency_of_min();
         anything_updated = adv_updated || alg_updated;
         if (gbm.min_adv_potential() >= 1.0) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
