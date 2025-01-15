@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdarg>
+#include <cassert>
 #include "common.hpp"
 
 // A fprintf(stderr) version of the #error macro.

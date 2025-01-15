@@ -1,58 +1,36 @@
-#include <cstdlib>
-#include <cstdio>
-#include <unordered_set>
-#include <queue>
+#include "../common.hpp"
+#include "../pairwise_wf_manager.hpp"
 #include "../permutation_graph.hpp"
 #include "../wf_manager.hpp"
-#include "../workfunction.hpp"
-#include "game_graph.hpp"
+#include "pairwise_game_graph.hpp"
 
-int main() {
-    std::string workfunctions_filename = std::string("wfs-") + std::to_string(LISTSIZE) + std::string(".log");
-
+int main(void) {
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
 
+
     invs = new workfunction<LISTSIZE>{};
     wf_manager<LISTSIZE>::initialize_inversions();
+
+
+    pairwise_wf_manager<LISTSIZE> wfm;
 
     fprintf(stderr, "Total permutations %zu.\n", pg->all_perms.size());
     for (auto & all_perm : pg->all_perms) {
         all_perm.print();
     }
 
-
-    wf_manager<TESTSIZE> wm(*pg);
-
-    invs->print();
-
-#if TSIZE == 4
-    // Test.
-    permutation<TESTSIZE> random{};
-    random.data = {0,3,1,2};
-    permutation<TESTSIZE> initial{};
-    initial.data = {0,1,2,3};
-    permutation<TESTSIZE> third{};
-    third.data = {3,1,2,0};
-
-    fprintf(stderr, "[0,3,1,2] inversions: %hd.\n", random.inversions());
-    fprintf(stderr, "[0,1,2,3] inversions w.r.t. [0,3,1,2]: %hd.\n", initial.inversions_wrt(&random));
-    fprintf(stderr, "[0,3,1,2] inversions w.r.t. [0,3,1,2]: %hd.\n", random.inversions_wrt(&random));
-    fprintf(stderr, "[3,1,2,0] inversions w.r.t. [0,3,1,2]: %hd.\n", third.inversions_wrt(&random));
-#endif
-
-    wm.initialize_reachable();
-    uint64_t rchbl = wm.reachable_wfs.size();
+    wfm.initialize_reachable();
+    uint64_t rchbl = wfm.reachable_wfs.size();
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
 
-    // The actual deal.
 
-    game_graph<TESTSIZE> g(wm);
+    pairwise_game_graph<TESTSIZE> g(wfm, *pg);
     bool anything_updated = true;
     uint64_t iter_count = 0;
     while(anything_updated) {
         //if (iter_count % 10 == 0) {
-            fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
+        fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
         //}
         bool adv_updated = g.update_adv();
         bool alg_updated = g.update_alg();
