@@ -5,6 +5,9 @@
 #include "pairwise_game_graph.hpp"
 
 int main(void) {
+    std::string workfunctions_filename = std::string("pwfs-") + std::to_string(LISTSIZE) + std::string(".log");
+    std::string potentials_filename = std::string("pwfs-pots-") + std::to_string(LISTSIZE) + std::string(".log");
+
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
 
@@ -33,16 +36,16 @@ int main(void) {
         fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
         //}
         bool adv_updated = g.update_adv();
-        bool alg_updated = g.update_alg();
+        // bool alg_updated = g.update_alg();
         // bool alg_updated = g.update_alg_mtf_of_request();
         // bool alg_updated = g.update_alg_single_swap();
-        // bool alg_updated = g.update_alg_request_moves_forward();
+        bool alg_updated = g.update_alg_request_moves_forward();
         // bool alg_updated = g.update_alg_wfa();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
-            // wm.print_reachable(workfunctions_filename);
-            // g.print_potential();
+            wfm.print_reachable(workfunctions_filename);
+            // g.print_potential(potentials_filename);
 
             return 0;
         }
@@ -50,7 +53,7 @@ int main(void) {
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
-    // wm.print_reachable(workfunctions_filename);
-    // g.print_potential();
+    wfm.print_reachable(workfunctions_filename);
+    // g.print_potential(potentials_filename);
     return 0;
 }

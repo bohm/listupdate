@@ -162,4 +162,15 @@ public:
                         " update costs %zu.\n", reachable_hashes.size(),
                 reachable_wfs.size(), hash_to_index.size(), adjacent_functions.size(), update_costs.size());
     }
+
+
+    void print_reachable(const std::string& filename) {
+        FILE* outf = fopen(filename.c_str(), "w");
+        for (int i = 0;i < reachable_wfs.size(); i++) {
+            fprintf(outf, "Reachable pairwise work function of id (index in array) %d:\n", i);
+            reachable_wfs[i].print(outf);
+        }
+        fclose(outf);
+    }
+
 };
