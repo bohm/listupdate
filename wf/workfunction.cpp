@@ -15,32 +15,12 @@ int main() {
 
     invs = new workfunction<LISTSIZE>{};
     wf_manager<LISTSIZE>::initialize_inversions();
-
+    pg->populate_quick_inversions();
     fprintf(stderr, "Total permutations %zu.\n", pg->all_perms.size());
-    for (auto & all_perm : pg->all_perms) {
-        all_perm.print();
-    }
-
 
     wf_manager<TESTSIZE> wm(*pg);
 
-    invs->print();
-
-#if TSIZE == 4
-    // Test.
-    permutation<TESTSIZE> random{};
-    random.data = {0,3,1,2};
-    permutation<TESTSIZE> initial{};
-    initial.data = {0,1,2,3};
-    permutation<TESTSIZE> third{};
-    third.data = {3,1,2,0};
-
-    fprintf(stderr, "[0,3,1,2] inversions: %hd.\n", random.inversions());
-    fprintf(stderr, "[0,1,2,3] inversions w.r.t. [0,3,1,2]: %hd.\n", initial.inversions_wrt(&random));
-    fprintf(stderr, "[0,3,1,2] inversions w.r.t. [0,3,1,2]: %hd.\n", random.inversions_wrt(&random));
-    fprintf(stderr, "[3,1,2,0] inversions w.r.t. [0,3,1,2]: %hd.\n", third.inversions_wrt(&random));
-#endif
-
+    // invs->print();
     wm.initialize_reachable();
     uint64_t rchbl = wm.reachable_wfs.size();
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
@@ -55,11 +35,11 @@ int main() {
             fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
         //}
         bool adv_updated = g.update_adv();
-        bool alg_updated = g.update_alg();
+        // bool alg_updated = g.update_alg();
         // bool alg_updated = g.update_alg_mtf_of_request();
         // bool alg_updated = g.update_alg_single_swap();
         // bool alg_updated = g.update_alg_request_moves_forward();
-        // bool alg_updated = g.update_alg_wfa();
+        bool alg_updated = g.update_alg_wfa();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");

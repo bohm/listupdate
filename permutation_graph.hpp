@@ -32,6 +32,7 @@ public:
     std::array<permutation<SIZE>, factorial[SIZE]> all_perms;
     std::array<std::array<uint64_t, SIZE-1>, factorial[SIZE]> adjacencies;
     std::array<std::array<uint64_t, factorial[SIZE]>, factorial[SIZE]> right_composition;
+    std::array<short, factorial[SIZE]*(factorial[SIZE]+1)>* quick_inversions = nullptr;
 
     // Lexicographically next permutation. Returns false if perm was the largest one.
     // Knuth's algorithm.
@@ -95,6 +96,27 @@ public:
                 right_composition[i][j] = resulting_permutation_id;
             }
         }
+    }
+
+    short quick_inversion_wrt(uint64_t i, uint64_t j)
+    {
+        return (*quick_inversions)[i*(factorial[SIZE]+1)+j];
+    }
+
+    void populate_quick_inversions() {
+        quick_inversions = new std::array<short, factorial[SIZE]*(factorial[SIZE]+1)>();
+        for (int i = 0; i < factorial[SIZE]; i++)
+        {
+            for (int j = 0; j < factorial[SIZE]; j++)
+            {
+                (*quick_inversions)[i*(factorial[SIZE]+1)+j] = all_perms[i].inversions_wrt(&(all_perms[j]));
+            }
+        }
+    }
+
+    void free_quick_inversions()
+    {
+        delete quick_inversions;
     }
 
     uint64_t quick_compose_right(uint64_t left_perm_id, uint64_t right_perm_id) {

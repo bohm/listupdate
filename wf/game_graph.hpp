@@ -101,18 +101,21 @@ public:
         return m;
     }
 
-    unsigned int wfa_cost(unsigned long wf_index, permutation<LISTSIZE> *current_alg_pos, unsigned long perm_index) const {
+    unsigned int wfa_cost(unsigned long wf_index, unsigned long current_alg_index, unsigned long perm_index) const {
         permutation<LISTSIZE>* perm = &(wf.pm.all_perms[perm_index]);
+        // permutation<LISTSIZE>* current_alg_pos = &(wf.pm.all_perms[current_alg_index]);
         unsigned int wf_cost = wf.reachable_wfs[wf_index].vals[perm_index];
-        unsigned int transition_cost =  perm->inversions_wrt(current_alg_pos);
-        return wf_cost + transition_cost;
+        // unsigned int transition_cost =  perm->inversions_wrt(current_alg_pos);
+        unsigned int quick_transition_cost = wf.pm.quick_inversion_wrt(perm_index, current_alg_index);
+        // assert(quick_transition_cost == transition_cost);
+        return wf_cost + quick_transition_cost;
     }
 
     unsigned int workfunction_algorithm_minimum(unsigned long wf_index, unsigned long perm_index, short request) const {
         unsigned int minimum_wfa_cost = std::numeric_limits<unsigned int>::max();
         permutation<LISTSIZE>* current_alg_pos = &(wf.pm.all_perms[perm_index]);
         for (unsigned int i = 0; i < factorial[LISTSIZE]; i++) {
-            unsigned int cost_for_i = wfa_cost(wf_index, current_alg_pos, i);
+            unsigned int cost_for_i = wfa_cost(wf_index, perm_index, i);
             if (cost_for_i < minimum_wfa_cost) {
                 minimum_wfa_cost = cost_for_i;
             }
@@ -216,7 +219,7 @@ public:
             // Instead of any permutation, we filter those which have higher than minimum value of WFA.
             unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index, req);
             for (int p = 0; p < factorial[SIZE]; p++) {
-                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, &(wf.pm.all_perms[perm_index]), p);
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
                 if (wfa_cost_for_this_index > wfa_minimum_value) {
                     continue;
                 }
