@@ -28,7 +28,7 @@ int main() {
     // The actual deal.
 
     game_graph<TESTSIZE> g(wm, true);
-    g.build_wfa_adjacencies();
+    g.build_wfa_minima();
     bool anything_updated = true;
     uint64_t iter_count = 0;
     while(anything_updated) {
@@ -41,7 +41,7 @@ int main() {
         // bool alg_updated = g.update_alg_single_swap();
         // bool alg_updated = g.update_alg_request_moves_forward();
         // bool alg_updated = g.update_alg_wfa();
-        bool alg_updated = g.update_alg_wfa_fast();
+        bool alg_updated = g.update_alg_wfa_faster();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");

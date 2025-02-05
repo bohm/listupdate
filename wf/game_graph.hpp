@@ -16,7 +16,7 @@ public:
 
     bool wfa_adjacencies = false;
 
-    std::vector<uint64_t>* wfa_minimum_adjacency = nullptr;
+    short* wfa_minimum_values = nullptr;
 
     game_graph(wf_manager<SIZE> &w, bool wfa_adj = false) : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
@@ -24,9 +24,8 @@ public:
         algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
         alg_vertices = new short[algsize];
 
-        if (wfa_adjacencies)
-        {
-            wfa_minimum_adjacency = new std::vector<uint64_t>[advsize];
+        if (wfa_adjacencies) {
+            wfa_minimum_values = new short[advsize];
         }
 
         for (int i = 0; i < algsize; i++) {
@@ -45,7 +44,7 @@ public:
         delete[] alg_vertices;
         if (wfa_adjacencies)
         {
-            delete[] wfa_minimum_adjacency;
+            delete[] wfa_minimum_values;
         }
     }
 
@@ -263,9 +262,9 @@ public:
     }
 
 
-    void build_wfa_adjacencies()
+    void build_wfa_minima()
     {
-        fprintf(stderr, "Building work function minima adjacencies.\n");
+        fprintf(stderr, "Building work function minima.\n");
         bool any_potential_changed = false;
 #pragma omp parallel for
         for (uint64_t index = 0; index < advsize; index++)
@@ -273,35 +272,35 @@ public:
             // This looks weird but all such positions have the same WFA adjacency and minimum.
             auto [wf_index, perm_index] = decode_adv(index);
 
-            short new_pot = std::numeric_limits<short>::max();
-
             // Instead of any permutation, we filter those which have higher than minimum value of WFA.
             unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index);
-            for (int p = 0; p < factorial[SIZE]; p++)
-            {
-                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
-                if (wfa_cost_for_this_index > wfa_minimum_value) {
-                    continue;
-                } else {
-                    uint64_t target_adv = encode_adv(wf_index, p);
-                    wfa_minimum_adjacency[index].push_back(target_adv);
-                }
-            }
+            wfa_minimum_values[index] = static_cast<short>(wfa_minimum_value);
         }
-        fprintf(stderr, "Adjacencies finalized.\n");
+        fprintf(stderr, "Minima finalized.\n");
     }
 
-    bool update_alg_wfa_fast() {
+    bool update_alg_wfa_faster() {
         bool any_potential_changed = false;
 #pragma omp parallel for
         for (uint64_t index = 0; index < algsize; index++) {
             auto [wf_index, perm_index, req] = decode_alg(index);
             short new_pot = std::numeric_limits<short>::max();
-            uint64_t wfa_adj_index = encode_adv(wf_index, perm_index);
-            for (int p = 0; p < wfa_minimum_adjacency[wfa_adj_index].size(); p++) {
-                uint64_t target_adv = wfa_minimum_adjacency[wfa_adj_index][p];
-                auto [wf_index, adv_perm_index] = decode_adv(target_adv);
-                short alg_cost_s = alg_cost(perm_index, adv_perm_index, req);
+
+            // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+            unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+            for (int p = 0; p < factorial[SIZE]; p++) {
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                if (wfa_cost_for_this_index != wfa_minimum_value) {
+                    continue;
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "Phi_y (%hd) + c_xy  (%hd) = %hd.\n",
+                            adv_vertices[target_adv], alg_cost_s, adv_vertices[target_adv] + alg_cost_s);
+                }
                 if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
                     new_pot = adv_vertices[target_adv] + alg_cost_s;
                 }
@@ -320,6 +319,7 @@ public:
 
         return any_potential_changed;
     }
+
 
     bool update_alg_mtf_of_request() {
         bool any_potential_changed = false;
