@@ -26,7 +26,7 @@ public:
 
         if (wfa_adjacencies)
         {
-            wfa_minimum_adjacency = new std::vector<uint64_t>[algsize];
+            wfa_minimum_adjacency = new std::vector<uint64_t>[advsize];
         }
 
         for (int i = 0; i < algsize; i++) {
