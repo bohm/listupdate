@@ -268,12 +268,11 @@ public:
         fprintf(stderr, "Building work function minima adjacencies.\n");
         bool any_potential_changed = false;
 #pragma omp parallel for
-        for (uint64_t index = 0; index < algsize; index++)
+        for (uint64_t index = 0; index < advsize; index++)
         {
-            auto [wf_index, perm_index, _] = decode_alg(index);
-
             // This looks weird but all such positions have the same WFA adjacency and minimum.
-            uint64_t wfa_adj_index = encode_adv(wf_index, perm_index);
+            auto [wf_index, perm_index] = decode_adv(index);
+
             short new_pot = std::numeric_limits<short>::max();
 
             // Instead of any permutation, we filter those which have higher than minimum value of WFA.
@@ -285,7 +284,7 @@ public:
                     continue;
                 } else {
                     uint64_t target_adv = encode_adv(wf_index, p);
-                    wfa_minimum_adjacency[wfa_adj_index].push_back(target_adv);
+                    wfa_minimum_adjacency[index].push_back(target_adv);
                 }
             }
         }
