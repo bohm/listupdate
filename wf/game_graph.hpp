@@ -14,11 +14,20 @@ public:
     uint64_t advsize = 0;
     wf_manager<SIZE> &wf;
 
-    game_graph(wf_manager<SIZE> &w) : wf(w) {
+    bool wfa_adjacencies = false;
+
+    std::vector<uint64_t>* wfa_minimum_adjacency = nullptr;
+
+    game_graph(wf_manager<SIZE> &w, bool wfa_adj = false) : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
         adv_vertices = new short[advsize];
         algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
         alg_vertices = new short[algsize];
+
+        if (wfa_adjacencies)
+        {
+            wfa_minimum_adjacency = new std::vector<uint64_t>[algsize];
+        }
 
         for (int i = 0; i < algsize; i++) {
             alg_vertices[i] = 0;
@@ -34,6 +43,10 @@ public:
     {
         delete[] adv_vertices;
         delete[] alg_vertices;
+        if (wfa_adjacencies)
+        {
+            delete[] wfa_minimum_adjacency;
+        }
     }
 
 
@@ -208,7 +221,6 @@ public:
     }
 
 
-
     bool update_alg_wfa() {
         bool any_potential_changed = false;
 #pragma omp parallel for
@@ -251,6 +263,60 @@ public:
     }
 
 
+    void build_wfa_adjacencies()
+    {
+        fprintf(stderr, "Building work function minima adjacencies.\n");
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++)
+        {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index, req);
+            for (int p = 0; p < factorial[SIZE]; p++)
+            {
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                if (wfa_cost_for_this_index > wfa_minimum_value) {
+                    continue;
+                } else {
+                    uint64_t target_adv = encode_adv(wf_index, p);
+                    wfa_minimum_adjacency[index].push_back(target_adv);
+                }
+            }
+        }
+        fprintf(stderr, "Adjacencies finalized.\n");
+    }
+
+    bool update_alg_wfa_fast() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++) {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            short new_pot = std::numeric_limits<short>::max();
+            for (int p = 0; p < wfa_minimum_adjacency[index].size(); p++) {
+                uint64_t target_adv = wfa_minimum_adjacency[index][p];
+                auto [wf_index, adv_perm_index] = decode_adv(target_adv);
+                short alg_cost_s = alg_cost(perm_index, adv_perm_index, req);
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ALG vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, alg_vertices[index], new_pot);
+                }
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
 
     bool update_alg_mtf_of_request() {
         bool any_potential_changed = false;
