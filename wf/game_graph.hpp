@@ -124,7 +124,7 @@ public:
         return wf_cost + quick_transition_cost;
     }
 
-    unsigned int workfunction_algorithm_minimum(unsigned long wf_index, unsigned long perm_index, short request) const {
+    unsigned int workfunction_algorithm_minimum(unsigned long wf_index, unsigned long perm_index) const {
         unsigned int minimum_wfa_cost = std::numeric_limits<unsigned int>::max();
         permutation<LISTSIZE>* current_alg_pos = &(wf.pm.all_perms[perm_index]);
         for (unsigned int i = 0; i < factorial[LISTSIZE]; i++) {
@@ -270,11 +270,14 @@ public:
 #pragma omp parallel for
         for (uint64_t index = 0; index < algsize; index++)
         {
-            auto [wf_index, perm_index, req] = decode_alg(index);
+            auto [wf_index, perm_index, _] = decode_alg(index);
+
+            // This looks weird but all such positions have the same WFA adjacency and minimum.
+            uint64_t wfa_adj_index = encode_adv(wf_index, perm_index);
             short new_pot = std::numeric_limits<short>::max();
 
             // Instead of any permutation, we filter those which have higher than minimum value of WFA.
-            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index, req);
+            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index);
             for (int p = 0; p < factorial[SIZE]; p++)
             {
                 unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
@@ -282,7 +285,7 @@ public:
                     continue;
                 } else {
                     uint64_t target_adv = encode_adv(wf_index, p);
-                    wfa_minimum_adjacency[index].push_back(target_adv);
+                    wfa_minimum_adjacency[wfa_adj_index].push_back(target_adv);
                 }
             }
         }
@@ -295,8 +298,9 @@ public:
         for (uint64_t index = 0; index < algsize; index++) {
             auto [wf_index, perm_index, req] = decode_alg(index);
             short new_pot = std::numeric_limits<short>::max();
-            for (int p = 0; p < wfa_minimum_adjacency[index].size(); p++) {
-                uint64_t target_adv = wfa_minimum_adjacency[index][p];
+            uint64_t wfa_adj_index = encode_adv(wf_index, perm_index);
+            for (int p = 0; p < wfa_minimum_adjacency[wfa_adj_index].size(); p++) {
+                uint64_t target_adv = wfa_minimum_adjacency[wfa_adj_index][p];
                 auto [wf_index, adv_perm_index] = decode_adv(target_adv);
                 short alg_cost_s = alg_cost(perm_index, adv_perm_index, req);
                 if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
