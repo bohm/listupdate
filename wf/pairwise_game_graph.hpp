@@ -177,6 +177,52 @@ public:
         return any_potential_changed;
     }
 
+    bool update_alg_stay_or_mtf() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++) {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            if(GRAPH_DEBUG) {
+                fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
+                                "%hd.\n",
+                        index, wf_index, perm_index, req);
+
+                print_alg(index);
+            }
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of all choices, we only allow two MTF choices.
+            // STAY
+            unsigned long stay_perm_index = perm_index;
+            uint64_t target_adv = encode_adv(wf_index, stay_perm_index);
+            short alg_cost_s = alg_cost(perm_index, stay_perm_index, req);
+            if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                new_pot = adv_vertices[target_adv] + alg_cost_s;
+            }
+
+            // MTF
+
+            unsigned long mtf_perm_index = pg.all_perms[perm_index].mtf_copy(req).id();
+            target_adv = encode_adv(wf_index, mtf_perm_index);
+            alg_cost_s = alg_cost(perm_index, mtf_perm_index, req);
+            if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                new_pot = adv_vertices[target_adv] + alg_cost_s;
+            }
+
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ALG vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, alg_vertices[index], new_pot);
+                }
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
 
     bool update_alg_request_moves_forward() {
         bool any_potential_changed = false;

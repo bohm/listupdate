@@ -290,12 +290,12 @@ public:
                 min_update_costs.size());
 
         } else {
-            initialize_reachable_from_stratch();
+            initialize_reachable_from_scratch();
             save_reachable(reachable_filename);
         }
     }
 
-    void initialize_reachable_from_stratch() {
+    void initialize_reachable_from_scratch() {
         std::unordered_set<uint64_t> reachable_hashes;
 
         std::vector<std::array<uint64_t, SIZE>> adjacencies_by_hash;

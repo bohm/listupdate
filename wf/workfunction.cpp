@@ -10,7 +10,7 @@
 int main() {
     std::string workfunctions_filename = std::string("wfs-") + std::to_string(LISTSIZE) + std::string(".log");
 
-    std::string workfunctions_binary_fileanme = std::string("wfs-reachable-") + std::to_string(LISTSIZE) +
+    std::string workfunctions_binary_filename = std::string("wfs-reachable-") + std::to_string(LISTSIZE) +
         std::string(".bin");
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
@@ -23,7 +23,7 @@ int main() {
     wf_manager<TESTSIZE> wm(*pg);
 
     // invs->print();
-    wm.initialize_reachable(workfunctions_binary_fileanme);
+    wm.initialize_reachable(workfunctions_binary_filename);
     uint64_t rchbl = wm.reachable_wfs.size();
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
 

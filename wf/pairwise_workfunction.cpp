@@ -8,6 +8,8 @@ int main(void) {
     std::string workfunctions_filename = std::string("pwfs-") + std::to_string(LISTSIZE) + std::string(".log");
     std::string potentials_filename = std::string("pwfs-pots-") + std::to_string(LISTSIZE) + std::string(".log");
 
+    std::string pairwise_workfunctions_binary_filename = std::string("pwfs-reachable-") +
+        std::to_string(LISTSIZE) + std::string(".bin");
 
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
@@ -24,7 +26,7 @@ int main(void) {
         all_perm.print();
     }
 
-    wfm.initialize_reachable();
+    wfm.initialize_reachable(pairwise_workfunctions_binary_filename);
     uint64_t rchbl = wfm.reachable_wfs.size();
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
 
@@ -38,9 +40,9 @@ int main(void) {
         //}
         bool adv_updated = g.update_adv();
         // bool alg_updated = g.update_alg();
-        // bool alg_updated = g.update_alg_mtf_of_request();
+        bool alg_updated = g.update_alg_stay_or_mtf();
         // bool alg_updated = g.update_alg_single_swap();
-        bool alg_updated = g.update_alg_request_moves_forward();
+        // bool alg_updated = g.update_alg_request_moves_forward();
         // bool alg_updated = g.update_alg_wfa();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
