@@ -8,6 +8,7 @@ int main(void) {
     std::string workfunctions_filename = std::string("pwfs-") + std::to_string(LISTSIZE) + std::string(".log");
     std::string potentials_filename = std::string("pwfs-pots-") + std::to_string(LISTSIZE) + std::string(".log");
 
+
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
 
@@ -44,7 +45,7 @@ int main(void) {
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
-            wfm.print_reachable(workfunctions_filename);
+            // wfm.print_reachable(workfunctions_filename);
             // g.print_potential(potentials_filename);
 
             return 0;
@@ -54,6 +55,6 @@ int main(void) {
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
     wfm.print_reachable(workfunctions_filename);
-    // g.print_potential(potentials_filename);
+    g.print_potential(potentials_filename);
     return 0;
 }

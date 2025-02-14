@@ -10,6 +10,8 @@
 int main() {
     std::string workfunctions_filename = std::string("wfs-") + std::to_string(LISTSIZE) + std::string(".log");
 
+    std::string workfunctions_binary_fileanme = std::string("wfs-reachable-") + std::to_string(LISTSIZE) +
+        std::string(".bin");
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
 
@@ -21,7 +23,7 @@ int main() {
     wf_manager<TESTSIZE> wm(*pg);
 
     // invs->print();
-    wm.initialize_reachable();
+    wm.initialize_reachable(workfunctions_binary_fileanme);
     uint64_t rchbl = wm.reachable_wfs.size();
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
 
@@ -37,11 +39,11 @@ int main() {
         //}
         bool adv_updated = g.update_adv();
         // bool alg_updated = g.update_alg();
-        // bool alg_updated = g.update_alg_mtf_of_request();
+        bool alg_updated = g.update_alg_stay_or_mtf();
         // bool alg_updated = g.update_alg_single_swap();
         // bool alg_updated = g.update_alg_request_moves_forward();
         // bool alg_updated = g.update_alg_wfa();
-        bool alg_updated = g.update_alg_wfa_faster();
+        // bool alg_updated = g.update_alg_wfa_faster();
         anything_updated = adv_updated || alg_updated;
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");

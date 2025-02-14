@@ -63,17 +63,16 @@ public:
 
     void print_adv(uint64_t index, FILE* fout = stderr) const {
         auto [wf_index, perm_index] = decode_adv(index);
-        fprintf(fout, "WF index %lu, perm_index %lu.\n", wf_index, perm_index);
-        pg.all_perms[perm_index].print(fout);
-        fprintf(fout, "Work function %lu: \n", wf_index);
-        // wf.reachable_wfs[wf_index].print();
+        fprintf(fout, "ADV vertex: index %lu, work function index %lu, permutation: ", index, wf_index);
+        pg.all_perms[perm_index].print(fout, false);
+        fprintf(fout, ", potential %hd.\n", adv_vertices[index]);
     }
 
     void print_alg(uint64_t index, FILE *fout = stderr) const {
         auto [wf_index, perm_index, req] = decode_alg(index);
-        fprintf(fout, "ALG vertex: index %lu, perm_index %lu, request %lu.\n", wf_index, perm_index, req);
-        pg.all_perms[perm_index].print(fout);
-        fprintf(fout, "Work function %lu: \n", wf_index);
+        fprintf(fout, "ALG vertex: index %lu, permutation: ", index);
+        pg.all_perms[perm_index].print(fout, false);
+        fprintf(fout, ", request %lu, work function %lu, potential %hd.\n", req, wf_index, alg_vertices[index]);
         // wf.reachable_wfs[wf_index].print();
     }
 
@@ -266,8 +265,7 @@ public:
                 // short conp = conjectured_potential(wf_index, perm_index);
                 // fprintf(stderr, "adv%lu: adv potential %hd, marek's conjecture %hd, difference %hd.\n",
                 //        index, adv_vertices[index], conp, conp-adv_vertices[index]);
-                fprintf(fout, "adv%lu: adv potential %hd.\n", index, adv_vertices[index]);
-                print_shortest_path(index, shortest_path, fout);
+                // print_shortest_path(index, shortest_path, fout);
                 for (short r = 0; r < SIZE; r++) {
                     unsigned long next_wf = wf.adjacency(wf_index, r);
                     unsigned long next_alg_index = encode_alg(next_wf, perm_index, r);
@@ -283,8 +281,6 @@ public:
             } else {
                 auto [wf_index, perm_index, request] = decode_alg(index);
                 print_alg(index, fout);
-                fprintf(fout, "alg%lu: alg potential %hd.\n", index, alg_vertices[index]);
-
                 // Main difference: we only expand on tight edges here.
                 // Compute the number of tight edges first. It slows down the printing, but nothing important.
                 unsigned long tight_size = 0;
@@ -298,32 +294,23 @@ public:
 
                 unsigned long tight_index = 0;
                 permutation<LISTSIZE> current_alg_pos = pg.all_perms[perm_index];
+                bool something_printed = false;
                 for (unsigned long p = 0; p < factorial[SIZE]; p++) {
                     unsigned long next_adv_index = encode_adv(wf_index, p);
                     short alg_cost_s = alg_cost(perm_index, p, request);
-                    if (adv_vertices[next_adv_index] + alg_cost_s == alg_vertices[index]) {
-                        fprintf(fout, "Tight edge %lu/%lu between alg%lu and adv%lu.",
-                                tight_index, tight_size, index, next_adv_index);
-                        if (p == perm_index) {
-                            fprintf(fout, " Stay: ");
-                            pg.all_perms[perm_index].print(fout);
-                        } else {
-                            fprintf(fout, " Move");
-                            if (pg.all_perms[p].data[0] == request) {
-                                fprintf(fout, " (RIF)");
-                            }
-                            fprintf(fout, ": ");
-                            pg.all_perms[perm_index].print(fout, false);
-                            fprintf(fout, " -> ");
-                            pg.all_perms[p].print(fout);
-                        }
+                    // We only print the first potential-saving move and finish.
+                    if (!something_printed && (adv_vertices[next_adv_index] + alg_cost_s <= alg_vertices[index])) {
+                        something_printed = true;
+
+                        fprintf(fout, "Given request %lu, ALG switches to ", request);
+                        pg.all_perms[p].print(fout, false);
+                        fprintf(fout, ", moving to vertex adv%lu w/ potential %hd.\n",
+                            next_adv_index, adv_vertices[next_adv_index]);
 
                         if (!adv_vertices_visited[next_adv_index]) {
                             adv_vertices_visited[next_adv_index] = true;
                             bfs_q.emplace(true, next_adv_index, shortest_path);
                         }
-
-                        tight_index++;
                     }
                 }
             }

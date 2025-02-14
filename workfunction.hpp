@@ -86,6 +86,11 @@ public:
         }
         buf[starting_pos + factorial[SIZE]] = -1;
     }
+
+    template<class Archive> void serialize(Archive & ar, const unsigned int version)
+    {
+        ar & vals;
+    }
 };
 
 workfunction<TESTSIZE> *invs = nullptr;

@@ -4,6 +4,18 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include <filesystem>
+#include <iostream>
+#include <fstream>
+#include <boost/serialization/binary_object.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/array.hpp>
+using boost::serialization::make_binary_object;
+
+
 #include "permutation_graph.hpp"
 #include "workfunction.hpp"
 //#include "parallel-hashmap/parallel_hashmap/phmap.h" // The code requires the parallel-hashmap header-only library.
@@ -242,7 +254,48 @@ public:
 
 
 
-    void initialize_reachable() {
+    void save_reachable(std::string reachable_filename) {
+        std::ofstream f(reachable_filename.c_str(), std::ofstream::binary);
+        boost::archive::binary_oarchive ar(f);
+
+        ar << reachable_wfs;
+        ar << adjacent_functions;
+        ar << min_update_costs;
+        // ar << make_binary_object(&reachable_wfs, sizeof(reachable_wfs));
+        // ar << make_binary_object(hash_to_index, sizeof(hash_to_index));
+        // ar << make_binary_object(&adjacent_functions, sizeof(adjacent_functions));
+        // ar << make_binary_object(&min_update_costs, sizeof(min_update_costs));
+    }
+
+    void load_reachable(std::string reachable_filename) {
+        std::ifstream f(reachable_filename.c_str(), std::ifstream::binary);
+        boost::archive::binary_iarchive ar(f);
+        ar >> reachable_wfs;
+        ar >> adjacent_functions;
+        ar >> min_update_costs;
+    }
+
+    void fill_hash_to_index() {
+        hash_to_index.clear();
+        for (int i = 0; i < reachable_wfs.size(); i++) {
+            hash_to_index[hash(&(reachable_wfs[i]))] = i;
+        }
+    }
+    void initialize_reachable(std::string reachable_filename) {
+        if (std::filesystem::exists(reachable_filename)) {
+            load_reachable(reachable_filename);
+            fill_hash_to_index();
+            fprintf(stderr, "Sanity check: reachable_wfs %zu, hash_to_index %zu, adjacent functions %zu,"
+                " update costs %zu.\n", reachable_wfs.size(), hash_to_index.size(), adjacent_functions.size(),
+                min_update_costs.size());
+
+        } else {
+            initialize_reachable_from_stratch();
+            save_reachable(reachable_filename);
+        }
+    }
+
+    void initialize_reachable_from_stratch() {
         std::unordered_set<uint64_t> reachable_hashes;
 
         std::vector<std::array<uint64_t, SIZE>> adjacencies_by_hash;

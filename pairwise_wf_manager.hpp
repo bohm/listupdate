@@ -5,9 +5,19 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include <filesystem>
+#include <iostream>
+#include <fstream>
+#include <boost/serialization/binary_object.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/serialization.hpp>
+using boost::serialization::make_binary_object;
+
 
 #include "common.hpp"
 #include "wf/double_zobrist.hpp"
+
 
 constexpr uint64_t UNSORTED_PAIRS = (TSIZE * (TSIZE-1))/2;
 
@@ -80,9 +90,9 @@ public:
 
     std::array<std::array<uint64_t, 3>, UNSORTED_PAIRS> *zobrist;
     std::vector<pairwise_workfunction<SIZE>> reachable_wfs;
+    std::unordered_map<uint64_t, unsigned int> hash_to_index;
     std::vector<std::array<unsigned int, SIZE>> adjacent_functions;
     std::vector<std::array<short, SIZE>> update_costs;
-    std::unordered_map<uint64_t, unsigned int> hash_to_index;
     pairwise_wf_manager() {
 
             zobrist = new std::array<std::array<uint64_t, 3>, UNSORTED_PAIRS>();
@@ -113,6 +123,7 @@ public:
     short update_cost(uint64_t wf_index, short request) {
         return update_costs[wf_index][request];
     }
+
 
 
     void initialize_reachable() {

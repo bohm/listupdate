@@ -321,7 +321,7 @@ public:
     }
 
 
-    bool update_alg_mtf_of_request() {
+    bool update_alg_stay_or_mtf() {
         bool any_potential_changed = false;
 #pragma omp parallel for
         for (uint64_t index = 0; index < algsize; index++) {
