@@ -23,6 +23,9 @@ add_executable(listupdate
 )
 add_executable(permutation_test permutation_test.cpp)
 
+find_package(Boost 1.70.0 REQUIRED system serialization)
+target_link_libraries(listupdate PUBLIC Boost:headers Boost::system Boost:serialization)
+
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(listupdate PUBLIC OpenMP::OpenMP_CXX)
