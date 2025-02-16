@@ -184,7 +184,7 @@ public:
             auto [wf_index, perm_index, req] = decode_alg(index);
             if(GRAPH_DEBUG) {
                 fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
-                                "%hd.\n",
+                                "%lu.\n",
                         index, wf_index, perm_index, req);
 
                 print_alg(index);

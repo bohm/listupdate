@@ -56,7 +56,7 @@ int main(void) {
     }
 
     fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
-    wfm.print_reachable(workfunctions_filename);
-    g.print_potential(potentials_filename);
+    // wfm.print_reachable(workfunctions_filename);
+    // g.print_potential(potentials_filename);
     return 0;
 }

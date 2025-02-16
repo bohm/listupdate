@@ -18,7 +18,7 @@ public:
 
     short* wfa_minimum_values = nullptr;
 
-    game_graph(wf_manager<SIZE> &w, bool wfa_adj = false) : wf(w), wfa_adjacencies(wfa_adj) {
+    game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
         adv_vertices = new short[advsize];
         algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
@@ -28,12 +28,16 @@ public:
             wfa_minimum_values = new short[advsize];
         }
 
-        for (int i = 0; i < algsize; i++) {
-            alg_vertices[i] = 0;
-        }
+        if (binary_loadfile.empty()) {
+            for (int i = 0; i < algsize; i++) {
+                alg_vertices[i] = 0;
+            }
 
-        for (int i = 0; i < advsize; i++) {
-            adv_vertices[i] = 0;
+            for (int i = 0; i < advsize; i++) {
+                adv_vertices[i] = 0;
+            }
+        } else {
+            load_graph_binary(binary_loadfile);
         }
 
     };
@@ -93,6 +97,58 @@ public:
         const permutation<SIZE>& perm_one = wf.pm.all_perms[perm_index_one];
         const permutation<SIZE>* perm_two = &(wf.pm.all_perms[perm_index_two]);
         return MULTIPLIER*(perm_one.position(req) + perm_one.inversions_wrt(perm_two));
+    }
+
+
+    void write_graph_binary(const std::string& filename) {
+        FILE* binary_file = fopen(filename.c_str(), "wb");
+        size_t written = 0;
+        written = fwrite(&advsize, sizeof(uint64_t), 1, binary_file);
+        if (written != 1) {
+            PRINT_AND_ABORT("ADVSIZE was not written correctly.");
+        }
+        written = fwrite(&algsize, sizeof(uint64_t), 1, binary_file);
+        if (written != 1) {
+            PRINT_AND_ABORT("ALGSIZE was not written correctly.");
+        }
+
+        written = fwrite(adv_vertices, sizeof(short), advsize, binary_file);
+        if (written != advsize) {
+            PRINT_AND_ABORT("The adversary potential array was not written correctly.");
+        }
+        written = fwrite(alg_vertices, sizeof(short), algsize, binary_file);
+        if (written != algsize) {
+            PRINT_AND_ABORT("The algorithm potential array was not written correctly.");
+        }
+
+        fprintf(stderr, "Writtens %" PRIu64 " ADV vertices and %" PRIu64 " ALG vertices into the binary file.\n",
+        advsize, algsize);
+        fclose(binary_file);
+    }
+
+    void load_graph_binary(const std::string& filename) {
+        FILE* binary_file = fopen(filename.c_str(), "rb");
+        size_t read = 0;
+        read = fread(&advsize, sizeof(uint64_t), 1, binary_file);
+        if (read != 1) {
+            PRINT_AND_ABORT("ADVSIZE was not read correctly.");
+        }
+        read = fread(&algsize, sizeof(uint64_t), 1, binary_file);
+        if (read != 1) {
+            PRINT_AND_ABORT("ALGSIZE was not read correctly.");
+        }
+        fprintf(stderr, "Binary file contains %" PRIu64 " ADV vertices and %" PRIu64 " ALG vertices.\n",
+            advsize, algsize);
+        read = fread(adv_vertices, sizeof(short), advsize, binary_file);
+        if (read != advsize) {
+            PRINT_AND_ABORT("The adversary potential array was not read correctly.");
+        }
+        read = fread(alg_vertices, sizeof(short), algsize, binary_file);
+        if (read != algsize) {
+            PRINT_AND_ABORT("The algorithm potential array was not read correctly.");
+        }
+
+        fclose(binary_file);
     }
 
     /*
@@ -328,7 +384,7 @@ public:
             auto [wf_index, perm_index, req] = decode_alg(index);
             if(GRAPH_DEBUG) {
                 fprintf(stderr, "ALG vertex update %" PRIu64 " corresponding to wf_index %lu, perm_index %lu, request "
-                                "%hd.\n",
+                                "%lu.\n",
                         index, wf_index, perm_index, req);
 
                 print_alg(index);
