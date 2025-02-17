@@ -10,7 +10,7 @@
 int main() {
     std::string workfunctions_filename = std::string("wfs-") + std::to_string(LISTSIZE) + std::string(".log");
     std::string graph_binary_filename = std::string("wfs-graph-") + std::to_string(LISTSIZE)
-        + std::string(".bin");
+        + std::string("-ratio-") + std::to_string(RATIO) + std::string(".bin");
 
     std::string workfunctions_binary_filename = std::string("wfs-reachable-") + std::to_string(LISTSIZE) +
         std::string(".bin");
@@ -58,6 +58,8 @@ int main() {
             if (!std::filesystem::exists(graph_binary_filename)) {
                 g.write_graph_binary(graph_binary_filename);
             }
+
+            g.wfa_lowerbound_potential_propagation();
             return 0;
         }
         iter_count++;

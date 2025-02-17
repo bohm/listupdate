@@ -284,7 +284,7 @@ public:
             short new_pot = std::numeric_limits<short>::max();
 
             // Instead of any permutation, we filter those which have higher than minimum value of WFA.
-            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index, req);
+            unsigned int wfa_minimum_value = workfunction_algorithm_minimum(wf_index, perm_index);
             for (int p = 0; p < factorial[SIZE]; p++) {
                 unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
                 if (wfa_cost_for_this_index > wfa_minimum_value) {
@@ -556,6 +556,95 @@ public:
     }
 
 
+    // Print a lower bound (a graph winning for ADV) via propagation layer by layer. This may take a lot of
+    // time, but it is fairly gentle on memory.
+    void wfa_lowerbound_potential_propagation() {
+        std::unordered_set<uint64_t> adv_vertices_processed{};
+        std::unordered_set<uint64_t> alg_vertices_processed{};
+
+        std::unordered_set<uint64_t> current_adv{};
+        std::unordered_set<uint64_t> current_alg{};
+
+        // std::unordered_set<uint64_t> next_adv{};
+        // std::unordered_set<uint64_t> next_alg{};
+
+        current_adv.insert(0);
+        // print_adv(0);
+        while (!current_adv.empty()) {
+            for (uint64_t adv_vertex_index : current_adv) {
+                if (adv_vertices_processed.contains(adv_vertex_index)) {
+                    continue;
+                }
+                adv_vertices_processed.insert(adv_vertex_index);
+
+                auto [wf_index, perm_index] = decode_adv(adv_vertex_index);
+
+                // fprintf(stderr, "adv%lu: adv potential %hd.\n", adv_vertex_index, adv_vertices[adv_vertex_index]);
+                // print_adv(adv_vertex_index);
+
+
+                // wf.reachable_wfs[wf_index].print();
+
+                // Compute the would-be new potential.
+                short current_pot = adv_vertices[adv_vertex_index];
+                short new_pot = std::numeric_limits<short>::min();
+                int maximizer_request = -1;
+                for (int r = 0; r < SIZE; r++) {
+                    uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                    uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                    short adv_cost_s = adv_cost(wf_index, r);
+                    if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
+                        new_pot = alg_vertices[alg_index] - adv_cost_s;
+                        maximizer_request = r;
+                    }
+                }
+
+
+                uint64_t new_wf_index = wf.adjacency(wf_index, maximizer_request);
+                uint64_t alg_index = encode_alg(new_wf_index, perm_index, maximizer_request);
+                short adv_cost_s = adv_cost(wf_index, maximizer_request);
+                // fprintf(stderr, "Candidate edge between adv%lu and alg%lu, with new potential" " %hd and current potential %d.\n", adv_vertex_index, alg_index, alg_vertices[alg_index] - adv_cost_s, current_pot);
+                // fprintf(stderr, "adv%lu with req %hd: updated work function number %lu. Next alg%lu.\n", adv_vertex_index, maximizer_request, new_wf_index, alg_index);
+                if (!alg_vertices_processed.contains(alg_index)) {
+                        current_alg.insert(alg_index);
+                }
+            }
+
+            current_adv.clear();
+
+            for (uint64_t alg_vertex_index : current_alg) {
+                if (alg_vertices_processed.contains(alg_vertex_index)) {
+                    continue;
+                }
+                alg_vertices_processed.insert(alg_vertex_index);
+                // Here we add all edges going out.
+                auto [wf_index, perm_index, req] = decode_alg(alg_vertex_index);
+                // fprintf(stderr, "alg%lu: alg potential %hd.\n", alg_vertex_index, alg_vertices[alg_vertex_index]);
+                // print_alg(alg_vertex_index);
+                // wf.reachable_wfs[wf_index].print();
+
+
+                // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+                unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+                for (int p = 0; p < factorial[SIZE]; p++) {
+                    unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                    if (wfa_cost_for_this_index != wfa_minimum_value) {
+                        continue;
+                    }
+                    uint64_t target_adv = encode_adv(wf_index, p);
+                    if (!adv_vertices_processed.contains(target_adv)) {
+                        // fprintf(stderr, "alg%lu: WFA class suggests moving between alg%lu and adv%lu.\n", alg_vertex_index, alg_vertex_index, target_adv);
+                        current_adv.insert(target_adv);
+                    }
+                }
+            }
+
+            current_alg.clear();
+        }
+
+        fprintf(stderr, "Propagation visited %zu vertices.\n",
+                adv_vertices_processed.size() + alg_vertices_processed.size());
+    }
 
     void print_potential() {
         adv_vertices_visited = new bool[advsize];
