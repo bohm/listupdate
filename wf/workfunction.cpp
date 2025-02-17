@@ -43,14 +43,17 @@ int main() {
         //if (iter_count % 10 == 0) {
         fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
         //}
-        bool adv_updated = g.update_adv();
-        // bool alg_updated = g.update_alg();
-        // bool alg_updated = g.update_alg_stay_or_mtf();
-        // bool alg_updated = g.update_alg_single_swap();
-        // bool alg_updated = g.update_alg_request_moves_forward();
-        bool alg_updated = g.update_alg_wfa();
-        // bool alg_updated = g.update_alg_wfa_faster();
-        anything_updated = adv_updated || alg_updated;
+        if (g.min_adv_potential() <= 0) {
+            bool adv_updated = g.update_adv();
+            // bool alg_updated = g.update_alg();
+            // bool alg_updated = g.update_alg_stay_or_mtf();
+            // bool alg_updated = g.update_alg_single_swap();
+            // bool alg_updated = g.update_alg_request_moves_forward();
+            bool alg_updated = g.update_alg_wfa();
+            // bool alg_updated = g.update_alg_wfa_faster();
+            anything_updated = adv_updated || alg_updated;
+        }
+
         if (g.min_adv_potential() >= 1) {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
             // wm.print_reachable(workfunctions_filename);
