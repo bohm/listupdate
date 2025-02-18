@@ -376,6 +376,61 @@ public:
         return any_potential_changed;
     }
 
+    std::pair<bool, int> wfa_unique_minimizer(uint64_t wf_index, uint64_t perm_index) {
+        unsigned int wfa_min_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+        bool seen_one_already = false;
+        uint64_t minimizer = 0;
+        for (int p = 0; p < factorial[SIZE]; p++) {
+            unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+            if (wfa_cost_for_this_index == wfa_min_value) {
+                if (seen_one_already) {
+                    return {false, -1};
+                } else {
+                    seen_one_already = true;
+                    minimizer = p;
+                }
+            }
+        }
+        return {true, minimizer};
+    }
+
+    bool update_alg_wfa_unique_only() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t index = 0; index < algsize; index++) {
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+            unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+
+            auto [unique, p] = wfa_unique_minimizer(wf_index, perm_index);
+            if (unique) {
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                if (wfa_cost_for_this_index != wfa_minimum_value) {
+                    continue;
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            } else {
+                new_pot = 0;
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
+
 
     bool update_alg_stay_or_mtf() {
         bool any_potential_changed = false;

@@ -32,6 +32,7 @@ constexpr float EPSILON = 0.0001;
 constexpr int MULTIPLIER = 100;
 constexpr int ALG_MULTIPLIER = 2;
 constexpr int ADV_MULTIPLIER = 1;
+
 //constexpr long double RATIO = 3.0;
 constexpr long double RATIO = 3.1;
 //constexpr long double RATIO = 3.556;
