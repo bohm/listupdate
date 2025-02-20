@@ -33,7 +33,8 @@ constexpr int MULTIPLIER = 100;
 constexpr int ALG_MULTIPLIER = 2;
 constexpr int ADV_MULTIPLIER = 1;
 
-//constexpr long double RATIO = 3.0;
+// constexpr long double RATIO = 2.9;
+// constexpr long double RATIO = 3.0;
 constexpr long double RATIO = 3.1;
 //constexpr long double RATIO = 3.556;
 constexpr float RECENCY_RATIO = 0.6;

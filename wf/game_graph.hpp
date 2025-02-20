@@ -641,7 +641,7 @@ public:
                 // wf.reachable_wfs[wf_index].print();
 
                 // Compute the would-be new potential.
-                short current_pot = adv_vertices[adv_vertex_index];
+                /* short current_pot = adv_vertices[adv_vertex_index];
                 short new_pot = std::numeric_limits<short>::min();
                 int maximizer_request = -1;
                 for (int r = 0; r < SIZE; r++) {
@@ -653,15 +653,22 @@ public:
                         maximizer_request = r;
                     }
                 }
+                */
 
+                short current_pot = adv_vertices[adv_vertex_index];
 
-                uint64_t new_wf_index = wf.adjacency(wf_index, maximizer_request);
-                uint64_t alg_index = encode_alg(new_wf_index, perm_index, maximizer_request);
-                short adv_cost_s = adv_cost(wf_index, maximizer_request);
-                // fprintf(stderr, "Candidate edge between adv%lu and alg%lu, with new potential" " %hd and current potential %d.\n", adv_vertex_index, alg_index, alg_vertices[alg_index] - adv_cost_s, current_pot);
-                // fprintf(stderr, "adv%lu with req %hd: updated work function number %lu. Next alg%lu.\n", adv_vertex_index, maximizer_request, new_wf_index, alg_index);
-                if (!alg_vertices_processed.contains(alg_index)) {
-                        current_alg.insert(alg_index);
+                for (int r = 0; r < SIZE; r++) {
+                    uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                    uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                    short adv_cost_s = adv_cost(wf_index, r);
+                    // We are maximizing, so any value equal or larger could affect the potential.
+                    if (alg_vertices[alg_index] - adv_cost_s >= current_pot) {
+                        // fprintf(stderr, "Candidate edge between adv%lu and alg%lu, with new potential" " %hd and current potential %d.\n", adv_vertex_index, alg_index, alg_vertices[alg_index] - adv_cost_s, current_pot);
+                        // fprintf(stderr, "adv%lu with req %hd: updated work function number %lu. Next alg%lu.\n", adv_vertex_index, maximizer_request, new_wf_index, alg_index);
+                        if (!alg_vertices_processed.contains(alg_index)) {
+                            current_alg.insert(alg_index);
+                        }
+                    }
                 }
             }
 

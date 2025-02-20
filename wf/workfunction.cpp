@@ -50,8 +50,8 @@ int main() {
             // bool alg_updated = g.update_alg_single_swap();
             // bool alg_updated = g.update_alg_request_moves_forward();
             // bool alg_updated = g.update_alg_wfa();
-            // bool alg_updated = g.update_alg_wfa_faster();
-            bool alg_updated = g.update_alg_wfa_unique_only();
+            bool alg_updated = g.update_alg_wfa_faster();
+            // bool alg_updated = g.update_alg_wfa_unique_only();
             anything_updated = adv_updated || alg_updated;
         }
 
