@@ -33,7 +33,8 @@ endif()
 add_executable(workfunction wf/workfunction.cpp
         wf/game_graph.hpp
         wf/double_zobrist.hpp
-        pairwise_wf_manager.hpp)
+        pairwise_wf_manager.hpp
+        digraph.hpp)
 add_executable(reachablewf wf/reachablewf.cpp
         wf/double_zobrist.hpp
         data_structures/char_flat_set.hpp
@@ -42,3 +43,4 @@ add_executable(graph_test graph_test.cpp
         graphs/bip_mru_potentials.hpp)
 add_executable(pairwise_workfunction wf/pairwise_workfunction.cpp
         wf/pairwise_game_graph.hpp)
+add_executable(digraph_test digraph_test.cpp)

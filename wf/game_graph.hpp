@@ -2,6 +2,7 @@
 
 #include <omp.h>
 #include "../wf_manager.hpp"
+#include "../digraph.hpp"
 
 template <short SIZE> class game_graph {
 private:
@@ -17,6 +18,7 @@ public:
     bool wfa_adjacencies = false;
 
     short* wfa_minimum_values = nullptr;
+    std::array<uint64_t, 3>* last_three_maximizers = nullptr;
 
     game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
@@ -50,8 +52,22 @@ public:
         {
             delete[] wfa_minimum_values;
         }
+
+        delete[] last_three_maximizers;
     }
 
+
+    void init_last_three() {
+        last_three_maximizers = new std::array<uint64_t, 3>[advsize];
+    }
+
+    void serialize_last_three(std::string last_three_filename) {
+        std::ofstream f(last_three_filename.c_str(), std::ofstream::binary);
+        boost::archive::binary_oarchive ar(f);
+
+        ar << advsize;
+        ar << last_three_maximizers;
+    }
 
     std::pair<unsigned long int, unsigned long int> decode_adv(uint64_t index) const {
         return {index / factorial[SIZE], index % factorial[SIZE]};
@@ -233,6 +249,56 @@ public:
         return any_potential_changed;
     }
 
+    bool update_adv_save_last_three(const uint64_t iteration) {
+        bool any_potential_changed = false;
+        const uint64_t iteration_mod_three = iteration % 3;
+
+#pragma omp parallel for
+        for (uint64_t index = 0; index < advsize; index++) {
+            auto [wf_index, perm_index] = decode_adv(index);
+            if(GRAPH_DEBUG) {
+                fprintf(stderr, "ADV vertex update %" PRIu64 " corresponding to wf_index %lu and perm_index %lu.\n",
+                    index, wf_index, perm_index);
+                print_adv(index);
+            }
+            // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
+            short new_pot = std::numeric_limits<short>::min();
+            uint64_t maximizer_alg_index = 0;
+            for (int r = 0; r < SIZE; r++) {
+                uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                short adv_cost_s = adv_cost(wf_index, r);
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ADV vertex %" PRIu64 " has request %d associated with cost %hd.\n",
+                            index, r, adv_cost_s);
+                    // ADV potential update.
+                    fprintf(stderr, "Phi_x (%hd) - d_yx (%hd) = %hd.\n",
+                            alg_vertices[alg_index], adv_cost_s,
+                            alg_vertices[alg_index] - adv_cost_s);
+                }
+                if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
+                    new_pot = alg_vertices[alg_index] - adv_cost_s;
+                    maximizer_alg_index = alg_index;;
+                }
+            }
+
+            if (adv_vertices[index] != new_pot) {
+                any_potential_changed = true;
+
+                // Store the last three choices here, cyclically.
+                last_three_maximizers[index][iteration_mod_three] = maximizer_alg_index;
+
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ADV vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, adv_vertices[index], new_pot);
+                }
+                adv_vertices[index] = new_pot;
+            }
+        }
+        return any_potential_changed;
+    }
+
+
     bool update_alg() {
         bool any_potential_changed = false;
 #pragma omp parallel for
@@ -334,6 +400,7 @@ public:
         }
         fprintf(stderr, "Minima finalized.\n");
     }
+
 
     bool update_alg_wfa_faster() {
         bool any_potential_changed = false;
@@ -706,6 +773,188 @@ public:
 
         fprintf(stderr, "Propagation visited %zu vertices.\n",
                 adv_vertices_processed.size() + alg_vertices_processed.size());
+    }
+
+    // Converts the full structure into a simple digraph object that is easier to work with.
+    // Not suitable for large instances.
+    digraph* wfa_convert_into_digraph() {
+        auto *ret = new digraph();
+        std::unordered_map<uint64_t, unsigned long int> adv_vertex_to_digraph_vertex;
+        std::unordered_map<uint64_t, unsigned long int> alg_vertex_to_digraph_vertex;
+
+        for (uint64_t a = 0; a < advsize; a++) {
+            auto [wf_index, perm_index] = decode_adv(a);
+            unsigned long int source_digraph_id = -1;
+            if (!adv_vertex_to_digraph_vertex.contains(a)) {
+                source_digraph_id = ret->add_vertex();
+                adv_vertex_to_digraph_vertex[a] = source_digraph_id;
+            } else {
+                source_digraph_id = adv_vertex_to_digraph_vertex[a];
+            }
+
+            for (int r = 0; r < SIZE; r++) {
+                uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                short adv_cost_s = adv_cost(wf_index, r);
+
+                unsigned long int target_digraph_id = -1;
+                if (!alg_vertex_to_digraph_vertex.contains(alg_index)) {
+                    target_digraph_id = ret->add_vertex();
+                    alg_vertex_to_digraph_vertex[alg_index] = target_digraph_id;
+                } else {
+                    target_digraph_id = alg_vertex_to_digraph_vertex[alg_index];
+                }
+
+                ret->add_edge(source_digraph_id, target_digraph_id, -1.0 * static_cast<double>(adv_cost_s));
+            }
+        }
+
+        for (uint64_t a = 0; a < algsize; a++) {
+            auto [wf_index, perm_index, req] = decode_alg(a);
+
+            unsigned long int source_digraph_id = -1;
+            if (!alg_vertex_to_digraph_vertex.contains(a)) {
+                source_digraph_id = ret->add_vertex();
+                alg_vertex_to_digraph_vertex[a] = source_digraph_id;
+            } else {
+                source_digraph_id = alg_vertex_to_digraph_vertex[a];
+            }
+
+            // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+            unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+            for (int p = 0; p < factorial[SIZE]; p++) {
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                if (wfa_cost_for_this_index != wfa_minimum_value) {
+                    continue;
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+
+                unsigned long int target_digraph_id = -1;
+                if (!adv_vertex_to_digraph_vertex.contains(target_adv)) {
+                    target_digraph_id = ret->add_vertex();
+                    adv_vertex_to_digraph_vertex[target_adv] = target_digraph_id;
+                } else {
+                    target_digraph_id = adv_vertex_to_digraph_vertex[target_adv];
+                }
+
+                short alg_cost_s = alg_cost(perm_index, p, req);
+                ret->add_edge(source_digraph_id, target_digraph_id, alg_cost_s);
+            }
+        }
+
+        return ret;
+    }
+
+    digraph* wfa_propagation_build_digraph() {
+        auto *ret = new digraph();
+
+        std::unordered_set<uint64_t> adv_vertices_processed{};
+        std::unordered_set<uint64_t> alg_vertices_processed{};
+
+        std::unordered_set<uint64_t> current_adv{};
+        std::unordered_set<uint64_t> current_alg{};
+
+        // std::unordered_set<uint64_t> next_adv{};
+        // std::unordered_set<uint64_t> next_alg{};
+
+        std::unordered_map<uint64_t, unsigned long int> adv_vertex_to_digraph_vertex;
+        std::unordered_map<uint64_t, unsigned long int> alg_vertex_to_digraph_vertex;
+
+        current_adv.insert(0);
+        unsigned long int initial_vert = ret->add_vertex();
+        adv_vertex_to_digraph_vertex[0] = initial_vert;
+
+        // print_adv(0);
+        while (!current_adv.empty()) {
+            for (uint64_t adv_vertex_index : current_adv) {
+                if (adv_vertices_processed.contains(adv_vertex_index)) {
+                    continue;
+                }
+                adv_vertices_processed.insert(adv_vertex_index);
+
+                assert(adv_vertex_to_digraph_vertex.contains(adv_vertex_index));
+
+                auto [wf_index, perm_index] = decode_adv(adv_vertex_index);
+
+                short current_pot = adv_vertices[adv_vertex_index];
+
+                for (int r = 0; r < SIZE; r++) {
+                    uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                    uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                    short adv_cost_s = adv_cost(wf_index, r);
+                    // We are maximizing, so any value equal or larger could affect the potential.
+                    if (alg_vertices[alg_index] - adv_cost_s >= current_pot) {
+                        // fprintf(stderr, "Candidate edge between adv%lu and alg%lu, with new potential" " %hd and current potential %d.\n", adv_vertex_index, alg_index, alg_vertices[alg_index] - adv_cost_s, current_pot);
+                        // fprintf(stderr, "adv%lu with req %hd: updated work function number %lu. Next alg%lu.\n", adv_vertex_index, maximizer_request, new_wf_index, alg_index);
+
+                        unsigned long int target_digraph_id = -1;
+                        if (!alg_vertex_to_digraph_vertex.contains(alg_index)) {
+                            target_digraph_id = ret->add_vertex();
+                            alg_vertex_to_digraph_vertex[alg_index] = target_digraph_id;
+                        } else {
+                            target_digraph_id = alg_vertex_to_digraph_vertex[alg_index];
+                        }
+
+                        ret->add_edge(adv_vertex_to_digraph_vertex[adv_vertex_index], target_digraph_id, -1.0 * static_cast<double>(adv_cost_s));
+
+
+                        if (!alg_vertices_processed.contains(alg_index)) {
+                            current_alg.insert(alg_index);
+                        }
+                    }
+                }
+            }
+
+            current_adv.clear();
+
+            for (uint64_t alg_vertex_index : current_alg) {
+                if (alg_vertices_processed.contains(alg_vertex_index)) {
+                    continue;
+                }
+                alg_vertices_processed.insert(alg_vertex_index);
+
+                assert(alg_vertex_to_digraph_vertex.contains(alg_vertex_index));
+                // Here we add all edges going out.
+                auto [wf_index, perm_index, req] = decode_alg(alg_vertex_index);
+                // fprintf(stderr, "alg%lu: alg potential %hd.\n", alg_vertex_index, alg_vertices[alg_vertex_index]);
+                // print_alg(alg_vertex_index);
+                // wf.reachable_wfs[wf_index].print();
+
+
+                // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+                unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+                for (int p = 0; p < factorial[SIZE]; p++) {
+                    unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                    if (wfa_cost_for_this_index != wfa_minimum_value) {
+                        continue;
+                    }
+                    uint64_t target_adv = encode_adv(wf_index, p);
+
+                    unsigned long int target_digraph_id = -1;
+                    if (!adv_vertex_to_digraph_vertex.contains(target_adv)) {
+                        target_digraph_id = ret->add_vertex();
+                        adv_vertex_to_digraph_vertex[target_adv] = target_digraph_id;
+                    } else {
+                        target_digraph_id = adv_vertex_to_digraph_vertex[target_adv];
+                    }
+
+                    short alg_cost_s = alg_cost(perm_index, p, req);
+                    ret->add_edge(alg_vertex_to_digraph_vertex[alg_vertex_index], target_digraph_id, alg_cost_s);
+
+                    if (!adv_vertices_processed.contains(target_adv)) {
+                        // fprintf(stderr, "alg%lu: WFA class suggests moving between alg%lu and adv%lu.\n", alg_vertex_index, alg_vertex_index, target_adv);
+                        current_adv.insert(target_adv);
+                    }
+                }
+            }
+
+            current_alg.clear();
+        }
+
+        fprintf(stderr, "Propagation visited %zu vertices.\n",
+                adv_vertices_processed.size() + alg_vertices_processed.size());
+
+        return ret;
     }
 
     void print_potential() {

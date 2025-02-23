@@ -7,6 +7,7 @@
 #include "../workfunction.hpp"
 #include "game_graph.hpp"
 
+
 int main() {
     std::string workfunctions_filename = std::string("wfs-") + std::to_string(LISTSIZE) + std::string(".log");
     std::string graph_binary_filename = std::string("wfs-graph-") + std::to_string(LISTSIZE)
@@ -14,6 +15,9 @@ int main() {
 
     std::string workfunctions_binary_filename = std::string("wfs-reachable-") + std::to_string(LISTSIZE) +
         std::string(".bin");
+    std::string last_three_filename = std::string("last-three-maximizers-") + std::to_string(LISTSIZE) +
+        std::string(".bin");
+
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
 
@@ -37,6 +41,8 @@ int main() {
     }
     game_graph<TESTSIZE> g(wm, true, bin_name);
     g.build_wfa_minima();
+    // Saving last three positions.
+    g.init_last_three();
     bool anything_updated = true;
     uint64_t iter_count = 0;
     while(anything_updated) {
@@ -44,7 +50,8 @@ int main() {
         fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
         //}
         if (g.min_adv_potential() <= 0) {
-            bool adv_updated = g.update_adv();
+            // bool adv_updated = g.update_adv();
+            bool adv_updated = g.update_adv_save_last_three(iter_count);
             // bool alg_updated = g.update_alg();
             // bool alg_updated = g.update_alg_stay_or_mtf();
             // bool alg_updated = g.update_alg_single_swap();
@@ -63,7 +70,17 @@ int main() {
                 g.write_graph_binary(graph_binary_filename);
             }
 
-            g.wfa_lowerbound_potential_propagation();
+            if (g.last_three_maximizers != nullptr) {
+                g.serialize_last_three(last_three_filename);
+            }
+            // g.wfa_lowerbound_potential_propagation();
+            /* digraph* tight_edge_dg = g.wfa_propagation_build_digraph();
+            tight_edge_dg->print();
+            tight_edge_dg->bellman_ford();
+            digraph* full_dg = g.wfa_convert_into_digraph();
+            full_dg->print();
+            full_dg->bellman_ford();
+            */
             return 0;
         }
         iter_count++;
