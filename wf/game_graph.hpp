@@ -62,11 +62,54 @@ public:
     }
 
     void serialize_last_three(std::string last_three_filename) {
-        std::ofstream f(last_three_filename.c_str(), std::ofstream::binary);
-        boost::archive::binary_oarchive ar(f);
 
-        ar << advsize;
-        ar << last_three_maximizers;
+
+        FILE* binary_file = fopen(last_three_filename.c_str(), "wb");
+        size_t written = 0;
+        written = fwrite(&advsize, sizeof(uint64_t), 1, binary_file);
+        if (written != 1) {
+            PRINT_AND_ABORT("ADVSIZE was not written correctly.");
+        }
+        written = fwrite(last_three_maximizers, sizeof(std::array<uint64_t, 3>), advsize, binary_file);
+        if (written != advsize) {
+            PRINT_AND_ABORT("The last three choices array was not written correctly.");
+        }
+
+        fclose(binary_file);
+
+        fprintf(stderr, "0: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+            last_three_maximizers[0][0], last_three_maximizers[0][1], last_three_maximizers[0][2]);
+        fprintf(stderr, "1: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+            last_three_maximizers[1][0], last_three_maximizers[1][1], last_three_maximizers[2][2]);
+        fprintf(stderr, "2: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+            last_three_maximizers[2][0], last_three_maximizers[2][1], last_three_maximizers[2][2]);
+
+    }
+
+    void deserialize_last_three(std::string last_three_filename) {
+
+        FILE* binary_file = fopen(last_three_filename.c_str(), "rb");
+        size_t read = 0;
+        uint64_t advsize_check = 0;
+        read = fread(&advsize_check, sizeof(uint64_t), 1, binary_file);
+        if (read != 1) {
+            PRINT_AND_ABORT("ADVSIZE was not read correctly.");
+        }
+        assert(advsize_check == advsize);
+
+        read = fread(last_three_maximizers, sizeof(std::array<uint64_t, 3>), advsize, binary_file);
+        if (read != advsize) {
+            PRINT_AND_ABORT("The last three choices array was not read correctly.");
+        }
+        fclose(binary_file);
+
+        fprintf(stderr, "0: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+    last_three_maximizers[0][0], last_three_maximizers[0][1], last_three_maximizers[0][2]);
+        fprintf(stderr, "1: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+            last_three_maximizers[1][0], last_three_maximizers[1][1], last_three_maximizers[2][2]);
+        fprintf(stderr, "2: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+            last_three_maximizers[2][0], last_three_maximizers[2][1], last_three_maximizers[2][2]);
+
     }
 
     std::pair<unsigned long int, unsigned long int> decode_adv(uint64_t index) const {
@@ -286,7 +329,9 @@ public:
                 any_potential_changed = true;
 
                 // Store the last three choices here, cyclically.
-                last_three_maximizers[index][iteration_mod_three] = maximizer_alg_index;
+                if (!triple_contains(last_three_maximizers[index], maximizer_alg_index)) {
+                    last_three_maximizers[index][iteration_mod_three] = maximizer_alg_index;
+                }
 
                 if(GRAPH_DEBUG) {
                     fprintf(stderr, "ADV vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
@@ -297,6 +342,60 @@ public:
         }
         return any_potential_changed;
     }
+
+
+    bool update_adv_only_use_last_three(const uint64_t _) {
+        bool any_potential_changed = false;
+
+#pragma omp parallel for
+        for (uint64_t index = 0; index < advsize; index++) {
+            auto [wf_index, perm_index] = decode_adv(index);
+            std::array<uint64_t, 3> last_three = last_three_maximizers[index];
+
+            if(GRAPH_DEBUG) {
+                fprintf(stderr, "ADV vertex update %" PRIu64 " corresponding to wf_index %lu and perm_index %lu.\n",
+                    index, wf_index, perm_index);
+                print_adv(index);
+            }
+            // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
+            short new_pot = std::numeric_limits<short>::min();
+            for (int r = 0; r < SIZE; r++) {
+                uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                // Skip any choice that is not the last three.
+                if (!triple_contains(last_three, alg_index)) {
+                    continue;
+                }
+
+                short adv_cost_s = adv_cost(wf_index, r);
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ADV vertex %" PRIu64 " has request %d associated with cost %hd.\n",
+                            index, r, adv_cost_s);
+                    // ADV potential update.
+                    fprintf(stderr, "Phi_x (%hd) - d_yx (%hd) = %hd.\n",
+                            alg_vertices[alg_index], adv_cost_s,
+                            alg_vertices[alg_index] - adv_cost_s);
+                }
+                if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
+                    new_pot = alg_vertices[alg_index] - adv_cost_s;
+                }
+            }
+
+            if (adv_vertices[index] != new_pot) {
+                any_potential_changed = true;
+
+                // Store the last three choices here, cyclically.
+
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ADV vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, adv_vertices[index], new_pot);
+                }
+                adv_vertices[index] = new_pot;
+            }
+        }
+        return any_potential_changed;
+    }
+
 
 
     bool update_alg() {

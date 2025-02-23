@@ -89,3 +89,7 @@ constexpr std::array<uint64_t, TESTSIZE+1> factorial = fact_array();
 constexpr short diameter_bound(short n) {
     return (n*(n-1))/2;
 }
+
+inline bool triple_contains(const std::array<uint64_t, 3>& ar, const uint64_t el) {
+    return (el == ar[0] || el == ar[1] || el == ar[2]);
+}

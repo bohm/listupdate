@@ -43,6 +43,11 @@ int main() {
     g.build_wfa_minima();
     // Saving last three positions.
     g.init_last_three();
+    if (std::filesystem::exists(last_three_filename)) {
+        fprintf(stderr, "Loading last three ADV choices from the binary file.\n");
+        g.deserialize_last_three(last_three_filename);
+    }
+
     bool anything_updated = true;
     uint64_t iter_count = 0;
     while(anything_updated) {
@@ -52,6 +57,7 @@ int main() {
         if (g.min_adv_potential() <= 0) {
             // bool adv_updated = g.update_adv();
             bool adv_updated = g.update_adv_save_last_three(iter_count);
+            // bool adv_updated = g.update_adv_only_use_last_three(iter_count);
             // bool alg_updated = g.update_alg();
             // bool alg_updated = g.update_alg_stay_or_mtf();
             // bool alg_updated = g.update_alg_single_swap();
@@ -70,7 +76,7 @@ int main() {
                 g.write_graph_binary(graph_binary_filename);
             }
 
-            if (g.last_three_maximizers != nullptr) {
+            if (g.last_three_maximizers != nullptr && !std::filesystem::exists(last_three_filename)) {
                 g.serialize_last_three(last_three_filename);
             }
             // g.wfa_lowerbound_potential_propagation();
