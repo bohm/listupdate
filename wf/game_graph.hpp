@@ -20,6 +20,14 @@ public:
     short* wfa_minimum_values = nullptr;
     std::array<int8_t, 3>* last_three_maximizers = nullptr;
 
+    // For reachability purposes.
+    // For general lower bound computations, all vertices are reachable, so this is useless. However,
+    // if we only wish to explore some weaker OPT or specific subgraph, then this comes into play.
+    uint64_t reachable_advsize = 0;
+    uint64_t reachable_algsize = 0;
+    uint64_t* adv_vertices_reachable = nullptr;
+    uint64_t* alg_vertices_reachable = nullptr;
+
     game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
         adv_vertices = new short[advsize];
@@ -54,15 +62,17 @@ public:
         }
 
         delete[] last_three_maximizers;
+        delete[] adv_vertices_reachable;
+        delete[] alg_vertices_reachable;
     }
 
 
     void init_last_three() {
         last_three_maximizers = new std::array<int8_t, 3>[advsize];
         for (int i = 0; i < advsize; i++) {
-            last_three_maximizers[i][0] = 0;
-            last_three_maximizers[i][1] = 0;
-            last_three_maximizers[i][2] = 0;
+            last_three_maximizers[i][0] = -1;
+            last_three_maximizers[i][1] = -1;
+            last_three_maximizers[i][2] = -1;
         }
     }
 
@@ -223,10 +233,18 @@ public:
     }
      */
 
-    short min_adv_potential() {
+    short min_adv_potential() const {
         short m = std::numeric_limits<short>::max();
         for (uint64_t index = 0; index < advsize; index++) {
             m = std::min(m, adv_vertices[index]);
+        }
+        return m;
+    }
+
+    short reachable_min_adv_potential() const {
+        short m = std::numeric_limits<short>::max();
+        for ( int i = 0; i < reachable_advsize; i++) {
+            m = std::min(m, adv_vertices[adv_vertices_reachable[i]]);
         }
         return m;
     }
@@ -322,6 +340,10 @@ public:
                 any_potential_changed = true;
 
                 // Store the last three choices here, cyclically.
+                // Note that this is not strictly last three maximizers, because in principle
+                // the second-to-last maximizer can be overwritten. To store the actual last three, we would need
+                // a fourth digit in the list for each index (namely, the last written-to position).
+
                 if (!triple_contains(&last_three_maximizers[index], maximizer_request)) {
                     last_three_maximizers[index][iteration_mod_three] = maximizer_request;
                 }
@@ -363,6 +385,39 @@ public:
         }
         return any_potential_changed;
     }
+
+
+    bool reachable_update_adv_only_use_last_three(const uint64_t _) {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            auto [wf_index, perm_index] = decode_adv(index);
+
+            // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
+            short new_pot = std::numeric_limits<short>::min();
+            for (int8_t r = 0; r < SIZE; r++) {
+                // Skip any choice that is not the last three.
+                if (!triple_contains(&last_three_maximizers[index], r)) {
+                    continue;
+                }
+                uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                short adv_cost_s = adv_cost(wf_index, r);
+
+                if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
+                    new_pot = alg_vertices[alg_index] - adv_cost_s;
+                }
+            }
+
+            if (adv_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                adv_vertices[index] = new_pot;
+            }
+        }
+        return any_potential_changed;
+    }
+
 
 
 
@@ -509,6 +564,52 @@ public:
 
         return any_potential_changed;
     }
+
+
+
+    bool reachable_update_alg_wfa_faster() {
+        bool any_potential_changed = false;
+#pragma omp parallel for
+        for (uint64_t reachable_index = 0; reachable_index < reachable_algsize; reachable_index++) {
+            uint64_t index = alg_vertices_reachable[reachable_index];
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            short new_pot = std::numeric_limits<short>::max();
+
+            // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+            unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+            for (int p = 0; p < factorial[SIZE]; p++) {
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                if (wfa_cost_for_this_index != wfa_minimum_value) {
+                    continue;
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "Phi_y (%hd) + c_xy  (%hd) = %hd.\n",
+                            adv_vertices[target_adv], alg_cost_s, adv_vertices[target_adv] + alg_cost_s);
+                }
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                if(GRAPH_DEBUG) {
+                    fprintf(stderr, "ALG vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
+                            index, alg_vertices[index], new_pot);
+                }
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
+
+
 
     std::pair<bool, int> wfa_unique_minimizer(uint64_t wf_index, uint64_t perm_index) {
         unsigned int wfa_min_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
@@ -742,6 +843,171 @@ public:
             fprintf(stderr, "%hd, ", x);
         }
         fprintf(stderr, "\n");
+    }
+
+
+
+    void initialize_reachable_arrays(const std::unordered_set<uint64_t>& reachable_adv,
+        const std::unordered_set<uint64_t> & reachable_alg) {
+        reachable_advsize = reachable_adv.size();
+        reachable_algsize = reachable_alg.size();
+        adv_vertices_reachable = new uint64_t[reachable_advsize];
+        alg_vertices_reachable = new uint64_t[reachable_algsize];
+
+        // Serialize the sets into flat arrays (for parallel for purposes).
+        // We lose querying power in the meantime.
+        uint64_t i = 0;
+        for (uint64_t reachable_vertex: reachable_adv) {
+            adv_vertices_reachable[i] = reachable_vertex;
+            i++;
+        }
+
+        uint64_t j = 0;
+        for (uint64_t reachable_vertex: reachable_alg) {
+            alg_vertices_reachable[j] = reachable_vertex;
+            j++;
+        }
+    }
+
+    // Compute how many ALG and ADV vertices are reachable via just the last three maximizer moves.
+    void wfa_reachable_via_last_three() {
+        std::unordered_set<uint64_t> adv_vertices_processed{};
+        std::unordered_set<uint64_t> alg_vertices_processed{};
+
+        std::unordered_set<uint64_t> current_adv{};
+        std::unordered_set<uint64_t> current_alg{};
+
+        // std::unordered_set<uint64_t> next_adv{};
+        // std::unordered_set<uint64_t> next_alg{};
+
+        current_adv.insert(0);
+        // print_adv(0);
+        while (!current_adv.empty()) {
+            for (uint64_t adv_vertex_index : current_adv) {
+                if (adv_vertices_processed.contains(adv_vertex_index)) {
+                    continue;
+                }
+                adv_vertices_processed.insert(adv_vertex_index);
+
+                auto [wf_index, perm_index] = decode_adv(adv_vertex_index);
+
+                // fprintf(stderr, "adv%lu: adv potential %hd.\n", adv_vertex_index, adv_vertices[adv_vertex_index]);
+                // print_adv(adv_vertex_index);
+
+
+                // wf.reachable_wfs[wf_index].print();
+
+                short current_pot = adv_vertices[adv_vertex_index];
+
+                for (int8_t r = 0; r < SIZE; r++) {
+                    // Skip any choice that is not the last three.
+                    if (!triple_contains(&last_three_maximizers[adv_vertex_index], r)) {
+                        continue;
+                    }
+
+                    uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                    uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                    // short adv_cost_s = adv_cost(wf_index, r);
+                    if (!alg_vertices_processed.contains(alg_index)) {
+                            current_alg.insert(alg_index);
+                    }
+                }
+            }
+
+            current_adv.clear();
+
+            for (uint64_t alg_vertex_index : current_alg) {
+                if (alg_vertices_processed.contains(alg_vertex_index)) {
+                    continue;
+                }
+                alg_vertices_processed.insert(alg_vertex_index);
+                // Here we add all edges going out.
+                auto [wf_index, perm_index, req] = decode_alg(alg_vertex_index);
+                // fprintf(stderr, "alg%lu: alg potential %hd.\n", alg_vertex_index, alg_vertices[alg_vertex_index]);
+                // print_alg(alg_vertex_index);
+                // wf.reachable_wfs[wf_index].print();
+
+
+                // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+                unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+                for (int p = 0; p < factorial[SIZE]; p++) {
+                    unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                    if (wfa_cost_for_this_index != wfa_minimum_value) {
+                        continue;
+                    }
+                    uint64_t target_adv = encode_adv(wf_index, p);
+                    if (!adv_vertices_processed.contains(target_adv)) {
+                        // fprintf(stderr, "alg%lu: WFA class suggests moving between alg%lu and adv%lu.\n", alg_vertex_index, alg_vertex_index, target_adv);
+                        current_adv.insert(target_adv);
+                    }
+                }
+            }
+
+            current_alg.clear();
+        }
+
+        initialize_reachable_arrays(adv_vertices_processed, alg_vertices_processed);
+        fprintf(stderr, "Reachable via the last three maximizer moves: %zu adv vertices, %zu alg vertices.\n",
+                adv_vertices_processed.size(), alg_vertices_processed.size());
+    }
+        void serialize_reachable_arrays(const std::string& reachable_arrays_filename) const {
+
+        FILE* binary_file = fopen(reachable_arrays_filename.c_str(), "wb");
+        size_t written = 0;
+        written = fwrite(&reachable_advsize, sizeof(uint64_t), 1, binary_file);
+        if (written != 1) {
+            PRINT_AND_ABORT("Reachable_advsize was not written correctly.\n");
+        }
+        written = fwrite(adv_vertices_reachable, sizeof(uint64_t), reachable_advsize, binary_file);
+        if (written != reachable_advsize) {
+            PRINT_AND_ABORT("The reachable ADV array was not written correctly.\n");
+        }
+
+        written = fwrite(&reachable_algsize, sizeof(uint64_t), 1, binary_file);
+        if (written != 1) {
+            PRINT_AND_ABORT("Reachable_algsize was not written correctly.\n");
+        }
+        written = fwrite(alg_vertices_reachable, sizeof(uint64_t), reachable_algsize, binary_file);
+        if (written != reachable_algsize) {
+            PRINT_AND_ABORT("The reachable ALG array was not written correctly.\n");
+        }
+
+        fclose(binary_file);
+
+        fprintf(stderr, "Reachable array save: adv %" PRIu64 ", alg %" PRIu64 ". Check: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+            reachable_advsize, reachable_algsize, adv_vertices_reachable[0], adv_vertices_reachable[1], adv_vertices_reachable[2]);
+    }
+
+    void deserialize_reachable_arrays(const std::string& reachable_arrays_filename) {
+
+        FILE* binary_file = fopen(reachable_arrays_filename.c_str(), "rb");
+        size_t read = 0;
+        read = fread(&reachable_advsize, sizeof(uint64_t), 1, binary_file);
+        if (read != 1) {
+            PRINT_AND_ABORT("Reachable ADV size was not read correctly.");
+        }
+
+        adv_vertices_reachable = new uint64_t[reachable_advsize];
+        read = fread(adv_vertices_reachable, sizeof(uint64_t), reachable_advsize, binary_file);
+        if (read != reachable_advsize) {
+            PRINT_AND_ABORT("The reachable ADV array was not written correctly.\n");
+        }
+
+        read = fread(&reachable_algsize, sizeof(uint64_t), 1, binary_file);
+        if (read != 1) {
+            PRINT_AND_ABORT("Reachable ALG size was not read correctly.");
+        }
+
+        alg_vertices_reachable = new uint64_t[reachable_algsize];
+        read = fread(alg_vertices_reachable, sizeof(uint64_t), reachable_algsize, binary_file);
+        if (read != reachable_algsize) {
+            PRINT_AND_ABORT("The reachable ALG array was not written correctly.\n");
+        }
+
+        fclose(binary_file);
+
+        fprintf(stderr, "Reachable array load: adv %" PRIu64 ", alg %" PRIu64 ". Check: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+    reachable_advsize, reachable_algsize, adv_vertices_reachable[0], adv_vertices_reachable[1], adv_vertices_reachable[2]);
     }
 
 

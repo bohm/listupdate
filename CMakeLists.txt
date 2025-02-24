@@ -44,3 +44,4 @@ add_executable(graph_test graph_test.cpp
 add_executable(pairwise_workfunction wf/pairwise_workfunction.cpp
         wf/pairwise_game_graph.hpp)
 add_executable(digraph_test digraph_test.cpp)
+add_executable(workfunction-reach wf/workfunction-reach.cpp)
