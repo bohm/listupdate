@@ -42,6 +42,7 @@ public:
         }
     }
 
+
     explicit game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
         adv_vertices = new short[advsize];
@@ -1128,11 +1129,10 @@ public:
 
 
     bool opt_wins_via_decisions() {
-        reset_potentials();
+        reachable_reset_potentials();
         bool anything_updated = true;
         uint64_t iter_count = 0;
         while(anything_updated) {
-            fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
             if (reachable_min_adv_potential() <= 0) {
                 // bool adv_updated = reachable_update_adv_only_use_last_three(iter_count);
                 bool adv_updated = reachable_linear_update_adv_opt_decisions();
@@ -1170,10 +1170,12 @@ public:
                             opt_decision_map[index_to_decide][j] = -1;
                         }
                     }
-                }
-                opt_wins = opt_wins_via_decisions();
-                if (opt_wins) {
-                    break;
+                    opt_wins = opt_wins_via_decisions();
+                    if (opt_wins) {
+                        fprintf(stderr, "OPT wins if we make the decision of sending %" PRIi8 " at %" PRIu64".\n",
+                            opt_decision_map[index_to_decide][i], index_to_decide);
+                        break;
+                    }
                 }
             }
             assert(opt_wins);
@@ -1606,6 +1608,18 @@ public:
                 }
             }
             fprintf(stderr, "]\n");
+        }
+    }
+
+    void reachable_reset_potentials() {
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            adv_vertices_reachable[reachable_index] = 0;
+        }
+
+        for (uint64_t reachable_index = 0; reachable_index < reachable_algsize; reachable_index++) {
+            uint64_t index = alg_vertices_reachable[reachable_index];
+            alg_vertices_reachable[reachable_index] = 0;
         }
     }
 
