@@ -72,9 +72,9 @@ int main() {
             fprintf(stdout, "The min ADV potential is higher than one.\n");
             // wm.print_reachable(workfunctions_filename);
             // g.print_potential();
-            if (!std::filesystem::exists(graph_binary_filename)) {
+            /* if (!std::filesystem::exists(graph_binary_filename)) {
                 g.write_graph_binary(graph_binary_filename);
-            }
+            } */
 
             if (g.last_three_maximizers != nullptr && !std::filesystem::exists(last_three_filename)) {
                 g.serialize_last_three(last_three_filename);

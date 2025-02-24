@@ -344,13 +344,12 @@ public:
             // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
             short new_pot = std::numeric_limits<short>::min();
             for (short r = 0; r < SIZE; r++) {
-                uint64_t new_wf_index = wf.adjacency(wf_index, r);
-                uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
                 // Skip any choice that is not the last three.
                 if (!triple_contains(&last_three_maximizers[index], r)) {
                     continue;
                 }
-
+                uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
                 short adv_cost_s = adv_cost(wf_index, r);
 
                 if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
