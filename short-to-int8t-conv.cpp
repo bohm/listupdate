@@ -60,6 +60,13 @@ void deserialize_last_three_short(const std::string& last_three_filename) {
         old_format[2][0], old_format[2][1], old_format[2][2]);
 }
 
+void sync_arrays() {
+    for (int i = 0; i < advsize; i++) {
+        for (int j = 0; j < 3; j++) {
+          new_format[i][j] = static_cast<int8_t>(old_format[i][j]);
+        }
+    }
+}
 
 void serialize_last_three_int8t(const std::string& last_three_filename) {
 
@@ -90,6 +97,7 @@ int main(void)
     std::string last_three_filename_int8t = std::string("last-three-maximizers-5-int8t.bin");
 
     deserialize_last_three_short(last_three_filename);
+    sync_arrays();
     serialize_last_three_int8t(last_three_filename_int8t);
     return 0;
 }

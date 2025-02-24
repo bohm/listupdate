@@ -66,7 +66,7 @@ public:
         }
     }
 
-    void serialize_last_three(const std::string& last_three_filename) {
+    void serialize_last_three(const std::string& last_three_filename) const {
 
         FILE* binary_file = fopen(last_three_filename.c_str(), "wb");
         size_t written = 0;
@@ -81,11 +81,11 @@ public:
 
         fclose(binary_file);
 
-        fprintf(stderr, "0: %hd, %hd, %hd.\n",
+        fprintf(stderr, "0: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
             last_three_maximizers[0][0], last_three_maximizers[0][1], last_three_maximizers[0][2]);
-        fprintf(stderr, "1: %hd, %hd, %hd.\n",
+        fprintf(stderr, "1: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
             last_three_maximizers[1][0], last_three_maximizers[1][1], last_three_maximizers[2][2]);
-        fprintf(stderr, "2: %hd, %hd, %hd.\n",
+        fprintf(stderr, "2: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
             last_three_maximizers[2][0], last_three_maximizers[2][1], last_three_maximizers[2][2]);
 
     }
@@ -107,11 +107,11 @@ public:
         }
         fclose(binary_file);
 
-        fprintf(stderr, "0: %hd, %hd, %hd.\n",
+        fprintf(stderr, "0: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
             last_three_maximizers[0][0], last_three_maximizers[0][1], last_three_maximizers[0][2]);
-        fprintf(stderr, "1: %hd, %hd, %hd.\n",
+        fprintf(stderr, "1: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
             last_three_maximizers[1][0], last_three_maximizers[1][1], last_three_maximizers[2][2]);
-        fprintf(stderr, "2: %hd, %hd, %hd.\n",
+        fprintf(stderr, "2: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
             last_three_maximizers[2][0], last_three_maximizers[2][1], last_three_maximizers[2][2]);
     }
 
