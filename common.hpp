@@ -90,6 +90,6 @@ constexpr short diameter_bound(short n) {
     return (n*(n-1))/2;
 }
 
-inline bool triple_contains(const std::array<short, 3>* ar, const short el) {
+inline bool triple_contains(const std::array<int8_t, 3>* ar, const short el) {
     return (el == (*ar)[0] || el == (*ar)[1] || el == (*ar)[2]);
 }

@@ -18,7 +18,7 @@ public:
     bool wfa_adjacencies = false;
 
     short* wfa_minimum_values = nullptr;
-    std::array<short, 3>* last_three_maximizers = nullptr;
+    std::array<int8_t, 3>* last_three_maximizers = nullptr;
 
     game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
@@ -58,7 +58,7 @@ public:
 
 
     void init_last_three() {
-        last_three_maximizers = new std::array<short, 3>[advsize];
+        last_three_maximizers = new std::array<int8_t, 3>[advsize];
         for (int i = 0; i < advsize; i++) {
             last_three_maximizers[i][0] = 0;
             last_three_maximizers[i][1] = 0;
@@ -66,8 +66,7 @@ public:
         }
     }
 
-    void serialize_last_three(std::string last_three_filename) {
-
+    void serialize_last_three(const std::string& last_three_filename) {
 
         FILE* binary_file = fopen(last_three_filename.c_str(), "wb");
         size_t written = 0;
@@ -75,7 +74,7 @@ public:
         if (written != 1) {
             PRINT_AND_ABORT("ADVSIZE was not written correctly.");
         }
-        written = fwrite(last_three_maximizers, sizeof(std::array<short, 3>), advsize, binary_file);
+        written = fwrite(last_three_maximizers, sizeof(std::array<int8_t, 3>), advsize, binary_file);
         if (written != advsize) {
             PRINT_AND_ABORT("The last three choices array was not written correctly.");
         }
@@ -91,7 +90,7 @@ public:
 
     }
 
-    void deserialize_last_three(std::string last_three_filename) {
+    void deserialize_last_three(const std::string& last_three_filename) {
 
         FILE* binary_file = fopen(last_three_filename.c_str(), "rb");
         size_t read = 0;
@@ -102,7 +101,7 @@ public:
         }
         assert(advsize_check == advsize);
 
-        read = fread(last_three_maximizers, sizeof(std::array<short, 3>), advsize, binary_file);
+        read = fread(last_three_maximizers, sizeof(std::array<int8_t, 3>), advsize, binary_file);
         if (read != advsize) {
             PRINT_AND_ABORT("The last three choices array was not read correctly.");
         }
@@ -307,8 +306,8 @@ public:
 
             // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
             short new_pot = std::numeric_limits<short>::min();
-            short maximizer_request = -1;
-            for (short r = 0; r < SIZE; r++) {
+            int8_t maximizer_request = -1;
+            for (int8_t r = 0; r < SIZE; r++) {
                 uint64_t new_wf_index = wf.adjacency(wf_index, r);
                 uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
                 short adv_cost_s = adv_cost(wf_index, r);
@@ -343,7 +342,7 @@ public:
 
             // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
             short new_pot = std::numeric_limits<short>::min();
-            for (short r = 0; r < SIZE; r++) {
+            for (int8_t r = 0; r < SIZE; r++) {
                 // Skip any choice that is not the last three.
                 if (!triple_contains(&last_three_maximizers[index], r)) {
                     continue;
