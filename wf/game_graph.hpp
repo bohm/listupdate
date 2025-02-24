@@ -439,7 +439,27 @@ public:
             short new_pot = std::numeric_limits<short>::min();
             for (int8_t r = 0; r < SIZE; r++) {
                 // Skip any choice that is not in the opt decision map.
-                if (!triple_contains(&opt_decision_map[index], r)) {
+                assert(opt_decision_map.contains(index));
+
+                fprintf(stderr, "Reachable #%" PRIu64 ": vertex index %" PRIu64 ", ", reachable_index, index);
+
+                fprintf(stderr, "[");
+                bool first = true;
+                for (int j = 0; j < 3; j++) {
+                    if (opt_decision_map[index][j] != -1) {
+                        if (!first) {
+                            fprintf(stderr, ",");
+                        } else {
+                            first = false;
+                        }
+
+                        fprintf(stderr, "%" PRIi8 "", opt_decision_map[index][j] );
+                    }
+                }
+
+                fprintf(stderr, "]\n");
+
+                if (!triple_contains(&(opt_decision_map[index]), r)) {
                     continue;
                 }
 
