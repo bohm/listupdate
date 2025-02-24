@@ -51,12 +51,12 @@ int main() {
     // g.print_top_three_for_reachable();
     // fprintf(stderr, "---\n");
     // g.lowerbound_via_decisions();
-    g.lowerbound_via_last_choices();
+    // g.lowerbound_via_last_choices();
 
 
     // Debug.
-    g.reset_potentials();
-    fprintf(stderr, "---.\n");
+    // g.reset_potentials();
+    // fprintf(stderr, "---.\n");
     bool anything_updated = true;
     uint64_t iter_count = 0;
     while(anything_updated) {
