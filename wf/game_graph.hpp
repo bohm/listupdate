@@ -20,6 +20,10 @@ public:
     short* wfa_minimum_values = nullptr;
     std::array<int8_t, 3>* last_three_maximizers = nullptr;
 
+    // Used for making OPT choices out of a list of three possible choices.
+    // The three is arbitrary, comes from the previous heuristic of last three maximizers.
+    std::unordered_map<uint64_t, std::array<int8_t, 3>> opt_decision_map{};
+
     // For reachability purposes.
     // For general lower bound computations, all vertices are reachable, so this is useless. However,
     // if we only wish to explore some weaker OPT or specific subgraph, then this comes into play.
@@ -28,7 +32,17 @@ public:
     uint64_t* adv_vertices_reachable = nullptr;
     uint64_t* alg_vertices_reachable = nullptr;
 
-    game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
+    void reset_potentials() {
+        for (int i = 0; i < algsize; i++) {
+            alg_vertices[i] = 0;
+        }
+
+        for (int i = 0; i < advsize; i++) {
+            adv_vertices[i] = 0;
+        }
+    }
+
+    explicit game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
         adv_vertices = new short[advsize];
         algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
@@ -39,13 +53,7 @@ public:
         }
 
         if (binary_loadfile.empty()) {
-            for (int i = 0; i < algsize; i++) {
-                alg_vertices[i] = 0;
-            }
-
-            for (int i = 0; i < advsize; i++) {
-                adv_vertices[i] = 0;
-            }
+            reset_potentials();
         } else {
             load_graph_binary(binary_loadfile);
         }
@@ -420,6 +428,38 @@ public:
 
 
 
+    bool reachable_linear_update_adv_opt_decisions() {
+        bool any_potential_changed = false;
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            auto [wf_index, perm_index] = decode_adv(index);
+
+            // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
+            short new_pot = std::numeric_limits<short>::min();
+            for (int8_t r = 0; r < SIZE; r++) {
+                // Skip any choice that is not in the opt decision map.
+                if (!triple_contains(&opt_decision_map[index], r)) {
+                    continue;
+                }
+
+                uint64_t new_wf_index = wf.adjacency(wf_index, r);
+                uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
+                short adv_cost_s = adv_cost(wf_index, r);
+
+                if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
+                    new_pot = alg_vertices[alg_index] - adv_cost_s;
+                }
+            }
+
+            if (adv_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                adv_vertices[index] = new_pot;
+            }
+        }
+        return any_potential_changed;
+    }
+
+
 
     bool update_alg() {
         bool any_potential_changed = false;
@@ -609,7 +649,38 @@ public:
         return any_potential_changed;
     }
 
+    bool reachable_linear_update_alg_wfa_faster() {
+        bool any_potential_changed = false;
+        for (uint64_t reachable_index = 0; reachable_index < reachable_algsize; reachable_index++) {
+            uint64_t index = alg_vertices_reachable[reachable_index];
+            auto [wf_index, perm_index, req] = decode_alg(index);
+            short new_pot = std::numeric_limits<short>::max();
 
+            // Instead of any permutation, we filter those which have higher than minimum value of WFA.
+            unsigned int wfa_minimum_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
+            for (int p = 0; p < factorial[SIZE]; p++) {
+                unsigned int wfa_cost_for_this_index = wfa_cost(wf_index, perm_index, p);
+                if (wfa_cost_for_this_index != wfa_minimum_value) {
+                    continue;
+                }
+                uint64_t target_adv = encode_adv(wf_index, p);
+                short alg_cost_s = alg_cost(perm_index, p, req);
+
+                // ALG potential update.
+                if (adv_vertices[target_adv] + alg_cost_s < new_pot) {
+                    new_pot = adv_vertices[target_adv] + alg_cost_s;
+                }
+            }
+
+            if (alg_vertices[index] != new_pot) {
+                any_potential_changed = true;
+                alg_vertices[index] = new_pot;
+
+            }
+        }
+
+        return any_potential_changed;
+    }
 
     std::pair<bool, int> wfa_unique_minimizer(uint64_t wf_index, uint64_t perm_index) {
         unsigned int wfa_min_value = wfa_minimum_values[encode_adv(wf_index, perm_index)];
@@ -847,10 +918,13 @@ public:
 
 
 
-    void initialize_reachable_arrays(const std::unordered_set<uint64_t>& reachable_adv,
+    void reinitialize_reachable_arrays(const std::unordered_set<uint64_t>& reachable_adv,
         const std::unordered_set<uint64_t> & reachable_alg) {
         reachable_advsize = reachable_adv.size();
         reachable_algsize = reachable_alg.size();
+
+        delete[] adv_vertices_reachable;
+        delete[] alg_vertices_reachable;
         adv_vertices_reachable = new uint64_t[reachable_advsize];
         alg_vertices_reachable = new uint64_t[reachable_algsize];
 
@@ -870,7 +944,7 @@ public:
     }
 
     // Compute how many ALG and ADV vertices are reachable via just the last three maximizer moves.
-    void wfa_reachable_via_last_three() {
+    void wfa_reachable_via(bool last_three = false) {
         std::unordered_set<uint64_t> adv_vertices_processed{};
         std::unordered_set<uint64_t> alg_vertices_processed{};
 
@@ -900,16 +974,23 @@ public:
                 short current_pot = adv_vertices[adv_vertex_index];
 
                 for (int8_t r = 0; r < SIZE; r++) {
-                    // Skip any choice that is not the last three.
-                    if (!triple_contains(&last_three_maximizers[adv_vertex_index], r)) {
-                        continue;
+                    if (last_three) {
+                        // Skip any choice that is not the last three.
+                        if (!triple_contains(&last_three_maximizers[adv_vertex_index], r)) {
+                            continue;
+                        }
+                    } else {
+                        // Use the opt decision map for testing if we should skip.
+                        if (!triple_contains(&opt_decision_map[adv_vertex_index], r)) {
+                            continue;
+                        }
                     }
 
                     uint64_t new_wf_index = wf.adjacency(wf_index, r);
                     uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
                     // short adv_cost_s = adv_cost(wf_index, r);
                     if (!alg_vertices_processed.contains(alg_index)) {
-                            current_alg.insert(alg_index);
+                        current_alg.insert(alg_index);
                     }
                 }
             }
@@ -946,11 +1027,11 @@ public:
             current_alg.clear();
         }
 
-        initialize_reachable_arrays(adv_vertices_processed, alg_vertices_processed);
+        reinitialize_reachable_arrays(adv_vertices_processed, alg_vertices_processed);
         fprintf(stderr, "Reachable via the last three maximizer moves: %zu adv vertices, %zu alg vertices.\n",
                 adv_vertices_processed.size(), alg_vertices_processed.size());
     }
-        void serialize_reachable_arrays(const std::string& reachable_arrays_filename) const {
+    void serialize_reachable_arrays(const std::string& reachable_arrays_filename) const {
 
         FILE* binary_file = fopen(reachable_arrays_filename.c_str(), "wb");
         size_t written = 0;
@@ -1008,6 +1089,101 @@ public:
 
         fprintf(stderr, "Reachable array load: adv %" PRIu64 ", alg %" PRIu64 ". Check: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
     reachable_advsize, reachable_algsize, adv_vertices_reachable[0], adv_vertices_reachable[1], adv_vertices_reachable[2]);
+    }
+
+
+    // Converts the set of three choices of all reachable vertices into a decision map.
+    void build_decision_map() {
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            opt_decision_map.insert({index, last_three_maximizers[index]});
+        }
+    }
+
+    void update_decision_map() {
+        auto opt_decision_map_copy = opt_decision_map;
+        opt_decision_map.clear();
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            opt_decision_map.insert({index, opt_decision_map_copy[index]});
+        }
+    }
+
+    std::pair<bool, uint64_t> find_first_decision() {
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            int minus_ones = 0;
+            for (int i = 0; i < 3; i++) {
+                if (opt_decision_map[index][i] == -1) {
+                    minus_ones++;
+                }
+            }
+            assert(minus_ones < 3);
+            if (minus_ones <= 1) {
+                return {true, index};
+            }
+        }
+        return {false, 0};
+    }
+
+
+    bool opt_wins_via_decisions() {
+        reset_potentials();
+        bool anything_updated = true;
+        uint64_t iter_count = 0;
+        while(anything_updated) {
+            fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
+            if (reachable_min_adv_potential() <= 0) {
+                // bool adv_updated = reachable_update_adv_only_use_last_three(iter_count);
+                bool adv_updated = reachable_linear_update_adv_opt_decisions();
+                bool alg_updated = reachable_linear_update_alg_wfa_faster();
+                anything_updated = adv_updated || alg_updated;
+            }
+
+            if (reachable_min_adv_potential() >= 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void lowerbound_via_decisions() {
+        assert(reachable_algsize > 0 && reachable_algsize > 0);
+        build_decision_map();
+        int number_of_decisions = 0;
+        bool decision_exists = true;
+        while (true) {
+            auto [decision_exists, index_to_decide] = find_first_decision();
+            if (!decision_exists) {
+                break;
+            }
+            number_of_decisions++;
+            auto old_decision_array = opt_decision_map[index_to_decide];
+            bool opt_wins = false;
+            for (int i = 0; i < 3; i++) {
+                // Make the decision.
+                if (old_decision_array[i] != -1) {
+                    for (int j = 0; j < 3; j++) {
+                        if (j == i) {
+                            opt_decision_map[index_to_decide][j] = old_decision_array[j];
+                        } else {
+                            opt_decision_map[index_to_decide][j] = -1;
+                        }
+                    }
+                }
+                opt_wins = opt_wins_via_decisions();
+                if (opt_wins) {
+                    break;
+                }
+            }
+            assert(opt_wins);
+            wfa_reachable_via();
+            update_decision_map();
+        }
+
+        // Finally, print the resulting array.
+        print_opt_decision_map();
+        fprintf(stderr, "Made %d decisions.\n", number_of_decisions);
     }
 
 
@@ -1410,4 +1586,28 @@ public:
             fprintf(stderr, "]\n");
         }
     }
+
+    void print_opt_decision_map() {
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            fprintf(stderr, "Reachable #%" PRIu64 ": vertex index %" PRIu64 ", ", reachable_index, index);
+
+            fprintf(stderr, "[");
+            bool first = true;
+            for (int j = 0; j < 3; j++) {
+                if (opt_decision_map[index][j] != -1) {
+                    if (!first) {
+                        fprintf(stderr, ",");
+                    } else {
+                        first = false;
+                    }
+
+                    fprintf(stderr, "%" PRIi8 "", opt_decision_map[index][j] );
+                }
+            }
+            fprintf(stderr, "]\n");
+        }
+    }
+
+
 };

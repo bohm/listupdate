@@ -54,38 +54,7 @@ int main() {
     g.deserialize_reachable_arrays(reachable_vertices_filename);
     g.print_top_three_for_reachable();
     fprintf(stderr, "---\n");
-    bool anything_updated = true;
-    uint64_t iter_count = 0;
-    while(anything_updated) {
-        //if (iter_count % 10 == 0) {
-        fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
-        //}
-        if (g.reachable_min_adv_potential() <= 0) {
-            // bool adv_updated = g.update_adv();
-            // bool adv_updated = g.update_adv_save_last_three(iter_count);
-            bool adv_updated = g.reachable_update_adv_only_use_last_three(iter_count);
-            // bool alg_updated = g.update_alg();
-            // bool alg_updated = g.update_alg_stay_or_mtf();
-            // bool alg_updated = g.update_alg_single_swap();
-            // bool alg_updated = g.update_alg_request_moves_forward();
-            // bool alg_updated = g.update_alg_wfa();
-            bool alg_updated = g.reachable_update_alg_wfa_faster();
-            // bool alg_updated = g.update_alg_wfa_faster();
-            // bool alg_updated = g.update_alg_wfa_unique_only();
-            anything_updated = adv_updated || alg_updated;
-        }
+    g.lowerbound_via_decisions();
 
-        if (g.reachable_min_adv_potential() >= 1) {
-            fprintf(stdout, "The min ADV potential is higher than one.\n");
-            return 0;
-        }
-        iter_count++;
-    }
-
-    fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
-
-    if (!std::filesystem::exists(graph_binary_filename)) {
-        g.write_graph_binary(graph_binary_filename);
-    }
     return 0;
 }
