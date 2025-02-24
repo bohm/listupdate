@@ -52,8 +52,8 @@ int main() {
 
     assert(std::filesystem::exists(reachable_vertices_filename));
     g.deserialize_reachable_arrays(reachable_vertices_filename);
-    g.print_top_three_for_reachable();
-    fprintf(stderr, "---\n");
+    // g.print_top_three_for_reachable();
+    // fprintf(stderr, "---\n");
     g.lowerbound_via_decisions();
 
     return 0;

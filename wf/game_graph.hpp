@@ -1131,7 +1131,7 @@ public:
     bool opt_wins_via_decisions() {
         reachable_reset_potentials();
         bool anything_updated = true;
-        uint64_t iter_count = 0;
+        int iter_count = 0;
         while(anything_updated) {
             if (reachable_min_adv_potential() <= 0) {
                 // bool adv_updated = reachable_update_adv_only_use_last_three(iter_count);
@@ -1141,9 +1141,12 @@ public:
             }
 
             if (reachable_min_adv_potential() >= 1) {
+                fprintf(stderr, "OPT won in %d iterations.\n", iter_count);
                 return true;
             }
+            iter_count++;
         }
+        fprintf(stderr, "Potential stabilized in %d iterations.\n", iter_count);
         return false;
     }
 
@@ -1159,10 +1162,14 @@ public:
             }
             number_of_decisions++;
             auto old_decision_array = opt_decision_map[index_to_decide];
+            fprintf(stderr, "Old decision array: %" PRIi8 " %" PRIi8 " %" PRIi8 ".\n",
+                old_decision_array[0], old_decision_array[1], old_decision_array[2]);
             bool opt_wins = false;
             for (int i = 0; i < 3; i++) {
                 // Make the decision.
                 if (old_decision_array[i] != -1) {
+                    fprintf(stderr, "Trying the decision of sending %" PRIi8 "at %" PRIu64 "\n",
+                        opt_decision_map[index_to_decide][i],index_to_decide);
                     for (int j = 0; j < 3; j++) {
                         if (j == i) {
                             opt_decision_map[index_to_decide][j] = old_decision_array[j];
@@ -1170,11 +1177,16 @@ public:
                             opt_decision_map[index_to_decide][j] = -1;
                         }
                     }
+                    fprintf(stderr, "New decision array: %" PRIi8 " %" PRIi8 " %" PRIi8 ".\n",
+    opt_decision_map[index_to_decide][0], opt_decision_map[index_to_decide][1], opt_decision_map[index_to_decide][2]);
                     opt_wins = opt_wins_via_decisions();
                     if (opt_wins) {
                         fprintf(stderr, "OPT wins if we make the decision of sending %" PRIi8 " at %" PRIu64".\n",
                             opt_decision_map[index_to_decide][i], index_to_decide);
                         break;
+                    } else {
+                        fprintf(stderr, "ALG wins if we make the decision of sending %" PRIi8 " at %" PRIu64".\n",
+                            opt_decision_map[index_to_decide][i], index_to_decide);
                     }
                 }
             }
