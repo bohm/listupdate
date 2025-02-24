@@ -1150,6 +1150,13 @@ public:
         return false;
     }
 
+    // A testing version of the method below.
+    void lowerbound_via_last_choices() {
+        assert(reachable_algsize > 0 && reachable_algsize > 0);
+        build_decision_map();
+        opt_wins_via_decisions();
+    }
+
     void lowerbound_via_decisions() {
         assert(reachable_algsize > 0 && reachable_algsize > 0);
         build_decision_map();
@@ -1169,7 +1176,7 @@ public:
                 // Make the decision.
                 if (old_decision_array[i] != -1) {
                     fprintf(stderr, "Trying the decision of sending %" PRIi8 "at %" PRIu64 "\n",
-                        opt_decision_map[index_to_decide][i],index_to_decide);
+                        old_decision_array[i],index_to_decide);
                     for (int j = 0; j < 3; j++) {
                         if (j == i) {
                             opt_decision_map[index_to_decide][j] = old_decision_array[j];

@@ -54,7 +54,8 @@ int main() {
     g.deserialize_reachable_arrays(reachable_vertices_filename);
     // g.print_top_three_for_reachable();
     // fprintf(stderr, "---\n");
-    g.lowerbound_via_decisions();
+    // g.lowerbound_via_decisions();
+    g.lowerbound_via_last_choices();
 
     return 0;
 }
