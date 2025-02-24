@@ -42,6 +42,8 @@ add_executable(reachablewf wf/reachablewf.cpp
 add_executable(graph_test graph_test.cpp
         graphs/bip_mru_potentials.hpp)
 add_executable(pairwise_workfunction wf/pairwise_workfunction.cpp
-        wf/pairwise_game_graph.hpp)
+        wf/pairwise_game_graph.hpp
+        wf/workfunction_verify.cpp)
 add_executable(digraph_test digraph_test.cpp)
-add_executable(workfunction-reach wf/workfunction-reach.cpp)
+add_executable(workfunction-reach wf/workfunction_decide.cpp)
+add_executable(workfunction_verify wf/workfunction_verify.cpp)

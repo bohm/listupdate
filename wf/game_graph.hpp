@@ -118,6 +118,43 @@ public:
         delete[] decisions_indexed_by_reachability;
     }
 
+    void deserialize_decisions(const std::string& decisions_filename) {
+        FILE *binary_file = fopen(decisions_filename.c_str(), "rb");
+        size_t read = 0;
+        uint64_t reachable_advsize_check = 0;
+        read = fread(&reachable_advsize_check, sizeof(uint64_t), 1, binary_file);
+        if (read != 1) {
+            PRINT_AND_ABORT("ADVSIZE was not read correctly.");
+        }
+        assert(reachable_advsize == reachable_advsize_check);
+
+        std::array<int8_t, 3>* decisions_indexed_by_reachability = nullptr;
+        decisions_indexed_by_reachability = new std::array<int8_t, 3>[reachable_advsize];
+        read = fread(decisions_indexed_by_reachability, sizeof(std::array<int8_t, 3>), reachable_advsize,
+            binary_file);
+        if (read != reachable_advsize) {
+            PRINT_AND_ABORT("The decision array was not read correctly.");
+        }
+
+        fclose(binary_file);
+        opt_decision_map.clear();
+        for (int i = 0; i < reachable_advsize; i++) {
+            uint64_t index = adv_vertices_reachable[i];
+            opt_decision_map[index] = decisions_indexed_by_reachability[i];
+        }
+
+        fprintf(stderr, "Deserialized %" PRIu64 " decisions.\n", reachable_advsize);
+
+        fprintf(stderr, "Dec 0: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
+            decisions_indexed_by_reachability[0][0], decisions_indexed_by_reachability[0][1], decisions_indexed_by_reachability[0][2]);
+        fprintf(stderr, "Dec 1: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
+            decisions_indexed_by_reachability[0][0], decisions_indexed_by_reachability[0][1], decisions_indexed_by_reachability[0][2]);
+        fprintf(stderr, "Dec 2: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
+            decisions_indexed_by_reachability[0][0], decisions_indexed_by_reachability[0][1], decisions_indexed_by_reachability[0][2]);
+
+        delete[] decisions_indexed_by_reachability;
+    }
+
     void serialize_last_three(const std::string& last_three_filename) const {
 
         FILE* binary_file = fopen(last_three_filename.c_str(), "wb");
@@ -1203,9 +1240,11 @@ public:
     }
 
     // A testing version of the method below.
-    void lowerbound_via_last_choices() {
+    void lowerbound_via_last_choices(bool decisions_from_scratch) {
         assert(reachable_algsize > 0 && reachable_algsize > 0);
-        build_decision_map();
+        if (decisions_from_scratch) {
+            build_decision_map();
+        }
         opt_wins_via_decisions();
     }
 
