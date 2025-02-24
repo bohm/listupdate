@@ -18,7 +18,7 @@ public:
     bool wfa_adjacencies = false;
 
     short* wfa_minimum_values = nullptr;
-    std::array<uint64_t, 3>* last_three_maximizers = nullptr;
+    std::array<short, 3>* last_three_maximizers = nullptr;
 
     game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
         advsize = wf.reachable_wfs.size()* factorial[SIZE];
@@ -58,7 +58,12 @@ public:
 
 
     void init_last_three() {
-        last_three_maximizers = new std::array<uint64_t, 3>[advsize];
+        last_three_maximizers = new std::array<short, 3>[advsize];
+        for (int i = 0; i < advsize; i++) {
+            last_three_maximizers[i][0] = 0;
+            last_three_maximizers[i][1] = 0;
+            last_three_maximizers[i][2] = 0;
+        }
     }
 
     void serialize_last_three(std::string last_three_filename) {
@@ -70,18 +75,18 @@ public:
         if (written != 1) {
             PRINT_AND_ABORT("ADVSIZE was not written correctly.");
         }
-        written = fwrite(last_three_maximizers, sizeof(std::array<uint64_t, 3>), advsize, binary_file);
+        written = fwrite(last_three_maximizers, sizeof(std::array<short, 3>), advsize, binary_file);
         if (written != advsize) {
             PRINT_AND_ABORT("The last three choices array was not written correctly.");
         }
 
         fclose(binary_file);
 
-        fprintf(stderr, "0: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+        fprintf(stderr, "0: %hd, %hd, %hd.\n",
             last_three_maximizers[0][0], last_three_maximizers[0][1], last_three_maximizers[0][2]);
-        fprintf(stderr, "1: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+        fprintf(stderr, "1: %hd, %hd, %hd.\n",
             last_three_maximizers[1][0], last_three_maximizers[1][1], last_three_maximizers[2][2]);
-        fprintf(stderr, "2: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+        fprintf(stderr, "2: %hd, %hd, %hd.\n",
             last_three_maximizers[2][0], last_three_maximizers[2][1], last_three_maximizers[2][2]);
 
     }
@@ -97,19 +102,18 @@ public:
         }
         assert(advsize_check == advsize);
 
-        read = fread(last_three_maximizers, sizeof(std::array<uint64_t, 3>), advsize, binary_file);
+        read = fread(last_three_maximizers, sizeof(std::array<short, 3>), advsize, binary_file);
         if (read != advsize) {
             PRINT_AND_ABORT("The last three choices array was not read correctly.");
         }
         fclose(binary_file);
 
-        fprintf(stderr, "0: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
-    last_three_maximizers[0][0], last_three_maximizers[0][1], last_three_maximizers[0][2]);
-        fprintf(stderr, "1: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+        fprintf(stderr, "0: %hd, %hd, %hd.\n",
+            last_three_maximizers[0][0], last_three_maximizers[0][1], last_three_maximizers[0][2]);
+        fprintf(stderr, "1: %hd, %hd, %hd.\n",
             last_three_maximizers[1][0], last_three_maximizers[1][1], last_three_maximizers[2][2]);
-        fprintf(stderr, "2: %" PRIu64 ", %" PRIu64 ", %" PRIu64 ".\n",
+        fprintf(stderr, "2: %hd, %hd, %hd.\n",
             last_three_maximizers[2][0], last_three_maximizers[2][1], last_three_maximizers[2][2]);
-
     }
 
     std::pair<unsigned long int, unsigned long int> decode_adv(uint64_t index) const {
@@ -180,7 +184,7 @@ public:
             PRINT_AND_ABORT("The algorithm potential array was not written correctly.");
         }
 
-        fprintf(stderr, "Writtens %" PRIu64 " ADV vertices and %" PRIu64 " ALG vertices into the binary file.\n",
+        fprintf(stderr, "Written %" PRIu64 " ADV vertices and %" PRIu64 " ALG vertices into the binary file.\n",
         advsize, algsize);
         fclose(binary_file);
     }
@@ -299,29 +303,19 @@ public:
 #pragma omp parallel for
         for (uint64_t index = 0; index < advsize; index++) {
             auto [wf_index, perm_index] = decode_adv(index);
-            if(GRAPH_DEBUG) {
-                fprintf(stderr, "ADV vertex update %" PRIu64 " corresponding to wf_index %lu and perm_index %lu.\n",
-                    index, wf_index, perm_index);
-                print_adv(index);
-            }
+
+
             // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
             short new_pot = std::numeric_limits<short>::min();
-            uint64_t maximizer_alg_index = 0;
-            for (int r = 0; r < SIZE; r++) {
+            short maximizer_request = -1;
+            for (short r = 0; r < SIZE; r++) {
                 uint64_t new_wf_index = wf.adjacency(wf_index, r);
                 uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
                 short adv_cost_s = adv_cost(wf_index, r);
-                if(GRAPH_DEBUG) {
-                    fprintf(stderr, "ADV vertex %" PRIu64 " has request %d associated with cost %hd.\n",
-                            index, r, adv_cost_s);
-                    // ADV potential update.
-                    fprintf(stderr, "Phi_x (%hd) - d_yx (%hd) = %hd.\n",
-                            alg_vertices[alg_index], adv_cost_s,
-                            alg_vertices[alg_index] - adv_cost_s);
-                }
+
                 if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
                     new_pot = alg_vertices[alg_index] - adv_cost_s;
-                    maximizer_alg_index = alg_index;;
+                    maximizer_request = r;
                 }
             }
 
@@ -329,14 +323,10 @@ public:
                 any_potential_changed = true;
 
                 // Store the last three choices here, cyclically.
-                if (!triple_contains(last_three_maximizers[index], maximizer_alg_index)) {
-                    last_three_maximizers[index][iteration_mod_three] = maximizer_alg_index;
+                if (!triple_contains(&last_three_maximizers[index], maximizer_request)) {
+                    last_three_maximizers[index][iteration_mod_three] = maximizer_request;
                 }
 
-                if(GRAPH_DEBUG) {
-                    fprintf(stderr, "ADV vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
-                            index, adv_vertices[index], new_pot);
-                }
                 adv_vertices[index] = new_pot;
             }
         }
@@ -350,32 +340,19 @@ public:
 #pragma omp parallel for
         for (uint64_t index = 0; index < advsize; index++) {
             auto [wf_index, perm_index] = decode_adv(index);
-            std::array<uint64_t, 3> last_three = last_three_maximizers[index];
 
-            if(GRAPH_DEBUG) {
-                fprintf(stderr, "ADV vertex update %" PRIu64 " corresponding to wf_index %lu and perm_index %lu.\n",
-                    index, wf_index, perm_index);
-                print_adv(index);
-            }
             // workfunction<SIZE> wf_before_move = wf.reachable_wfs[wf_index];
             short new_pot = std::numeric_limits<short>::min();
-            for (int r = 0; r < SIZE; r++) {
+            for (short r = 0; r < SIZE; r++) {
                 uint64_t new_wf_index = wf.adjacency(wf_index, r);
                 uint64_t alg_index = encode_alg(new_wf_index, perm_index, r);
                 // Skip any choice that is not the last three.
-                if (!triple_contains(last_three, alg_index)) {
+                if (!triple_contains(&last_three_maximizers[index], r)) {
                     continue;
                 }
 
                 short adv_cost_s = adv_cost(wf_index, r);
-                if(GRAPH_DEBUG) {
-                    fprintf(stderr, "ADV vertex %" PRIu64 " has request %d associated with cost %hd.\n",
-                            index, r, adv_cost_s);
-                    // ADV potential update.
-                    fprintf(stderr, "Phi_x (%hd) - d_yx (%hd) = %hd.\n",
-                            alg_vertices[alg_index], adv_cost_s,
-                            alg_vertices[alg_index] - adv_cost_s);
-                }
+
                 if (alg_vertices[alg_index] - adv_cost_s > new_pot) {
                     new_pot = alg_vertices[alg_index] - adv_cost_s;
                 }
@@ -383,13 +360,6 @@ public:
 
             if (adv_vertices[index] != new_pot) {
                 any_potential_changed = true;
-
-                // Store the last three choices here, cyclically.
-
-                if(GRAPH_DEBUG) {
-                    fprintf(stderr, "ADV vertex %" PRIu64 " changed its potential from %hd to %hd.\n",
-                            index, adv_vertices[index], new_pot);
-                }
                 adv_vertices[index] = new_pot;
             }
         }
