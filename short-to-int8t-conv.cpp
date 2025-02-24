@@ -87,9 +87,10 @@ void serialize_last_three_int8t(const std::string& last_three_filename) {
 
 int main(void)
 {
-    std::string last_three_filename = std::string("last-three-maximizers-5.bin");
+    std::string last_three_filename = std::string("last-three-maximizers-5-shorts.bin");
+    std::string last_three_filename_int8t = std::string("last-three-maximizers-5-int8t.bin");
 
     deserialize_last_three_short(last_three_filename);
-    serialize_last_three_int8t(last_three_filename);
+    serialize_last_three_int8t(last_three_filename_int8t);
     return 0;
 }
