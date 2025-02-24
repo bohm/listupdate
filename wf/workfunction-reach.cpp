@@ -36,11 +36,7 @@ int main() {
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
 
     // The actual deal.
-
     std::string bin_name{};
-    if (std::filesystem::exists(graph_binary_filename)) {
-        bin_name = graph_binary_filename;
-    }
     game_graph<TESTSIZE> g(wm, true, bin_name);
     g.build_wfa_minima();
     // Saving last three positions.
@@ -57,5 +53,27 @@ int main() {
     // g.lowerbound_via_decisions();
     g.lowerbound_via_last_choices();
 
+
+    // Debug.
+    g.reset_potentials();
+    fprintf(stderr, "---.\n");
+    bool anything_updated = true;
+    uint64_t iter_count = 0;
+    while(anything_updated) {
+        fprintf(stderr, "Iteration %" PRIu64 ".\n", iter_count);
+        if (g.reachable_min_adv_potential() <= 0) {
+            bool adv_updated = g.reachable_update_adv_only_use_last_three(iter_count);
+            bool alg_updated = g.reachable_update_alg_wfa_faster();
+            anything_updated = adv_updated || alg_updated;
+        }
+
+        if (g.reachable_min_adv_potential() >= 1) {
+            fprintf(stdout, "The min ADV potential is higher than one.\n");
+            return 0;
+        }
+        iter_count++;
+    }
+
+    fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
     return 0;
 }
