@@ -456,7 +456,6 @@ public:
                         fprintf(stderr, "%" PRIi8 "", opt_decision_map[index][j] );
                     }
                 }
-
                 fprintf(stderr, "]\n");
 
                 if (!triple_contains(&(opt_decision_map[index]), r)) {
@@ -1653,12 +1652,12 @@ public:
     void reachable_reset_potentials() {
         for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
             uint64_t index = adv_vertices_reachable[reachable_index];
-            adv_vertices_reachable[reachable_index] = 0;
+            adv_vertices[index] = 0;
         }
 
         for (uint64_t reachable_index = 0; reachable_index < reachable_algsize; reachable_index++) {
             uint64_t index = alg_vertices_reachable[reachable_index];
-            alg_vertices_reachable[reachable_index] = 0;
+            alg_vertices[index] = 0;
         }
     }
 
