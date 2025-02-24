@@ -1388,4 +1388,26 @@ public:
         delete[] adv_vertices_visited;
         delete[] alg_vertices_visited;
     }
+
+    void print_top_three_for_reachable() const {
+        for (uint64_t reachable_index = 0; reachable_index < reachable_advsize; reachable_index++) {
+            uint64_t index = adv_vertices_reachable[reachable_index];
+            fprintf(stderr, "Reachable #%" PRIu64 ": vertex index %" PRIu64 ", ", reachable_index, index);
+
+            fprintf(stderr, "[");
+            bool first = true;
+            for (int j = 0; j < 3; j++) {
+                if (last_three_maximizers[index][j] != -1) {
+                    if (!first) {
+                        fprintf(stderr, ",");
+                    } else {
+                        first = false;
+                    }
+
+                    fprintf(stderr, "%" PRIi8 "", last_three_maximizers[index][j] );
+                }
+            }
+            fprintf(stderr, "]\n");
+        }
+    }
 };
