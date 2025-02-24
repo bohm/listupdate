@@ -85,6 +85,39 @@ public:
         }
     }
 
+    void serialize_decisions(const std::string& decisions_filename) {
+        FILE *binary_file = fopen(decisions_filename.c_str(), "wb");
+        size_t written = 0;
+        written = fwrite(&reachable_advsize, sizeof(uint64_t), 1, binary_file);
+        if (written != 1) {
+            PRINT_AND_ABORT("ADVSIZE was not written correctly.");
+        }
+        std::array<int8_t, 3>* decisions_indexed_by_reachability = nullptr;
+        decisions_indexed_by_reachability = new std::array<int8_t, 3>[reachable_advsize];
+        for (int i = 0; i < reachable_advsize; i++) {
+            uint64_t index = adv_vertices_reachable[i];
+            decisions_indexed_by_reachability[i] = opt_decision_map[index];
+        }
+
+        written = fwrite(decisions_indexed_by_reachability, sizeof(std::array<int8_t, 3>), reachable_advsize,
+            binary_file);
+        if (written != reachable_advsize) {
+            PRINT_AND_ABORT("The decision array was not written correctly.");
+        }
+
+        fclose(binary_file);
+        fprintf(stderr, "Serialized %" PRIu64 " decisions.\n", reachable_advsize);
+
+        fprintf(stderr, "Dec 0: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
+            decisions_indexed_by_reachability[0][0], decisions_indexed_by_reachability[0][1], decisions_indexed_by_reachability[0][2]);
+        fprintf(stderr, "Dec 1: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
+            decisions_indexed_by_reachability[0][0], decisions_indexed_by_reachability[0][1], decisions_indexed_by_reachability[0][2]);
+        fprintf(stderr, "Dec 2: %" PRIi8 ", %" PRIi8 ", %" PRIi8 ".\n",
+            decisions_indexed_by_reachability[0][0], decisions_indexed_by_reachability[0][1], decisions_indexed_by_reachability[0][2]);
+
+        delete[] decisions_indexed_by_reachability;
+    }
+
     void serialize_last_three(const std::string& last_three_filename) const {
 
         FILE* binary_file = fopen(last_three_filename.c_str(), "wb");

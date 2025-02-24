@@ -20,6 +20,12 @@ int main() {
     std::string reachable_vertices_filename = std::string("reachable-subgraph-") + std::to_string(LISTSIZE)
         + std::string("-ratio-") + std::to_string(RATIO) + std::string(".bin");
 
+
+    std::string reachable_after_decisions_filename = std::string("reachable-after-decisions-") + std::to_string(LISTSIZE)
+        + std::string("-ratio-") + std::to_string(RATIO) + std::string(".bin");
+    std::string last_three_after_decisions_filename = std::string("last-three-after-") + std::to_string(LISTSIZE)
+        + std::string("-ratio-") + std::to_string(RATIO) + std::string(".bin");
+
     pg = new permutation_graph<LISTSIZE>();
     pg->init();
 
@@ -52,7 +58,8 @@ int main() {
     // fprintf(stderr, "---\n");
     // g.lowerbound_via_decisions();
     g.lowerbound_via_last_choices();
-
+    g.serialize_reachable_arrays(reachable_after_decisions_filename);
+    g.serialize_decisions(last_three_after_decisions_filename);
 
     // Debug.
     // g.reset_potentials();
