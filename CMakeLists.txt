@@ -3,47 +3,33 @@ project(listupdate)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(listupdate
-        main.cpp
-        memory_pairs.hpp
-        old_perm_functions.hpp
-        common.hpp
-        graph.hpp
-        algorithm.hpp
-        bellman_ford.hpp
-        memory_bitfield.hpp
-        implicit_graph.hpp
-        implicit_bellman_ford.hpp
-        storage.hpp
-        wf_manager.hpp
-        memory_perm.hpp
-        iteration_over_memory.hpp
-        memory_cartesian.hpp
-        graphs/graph_bipartite_mru.hpp
-)
-add_executable(permutation_test permutation_test.cpp)
 
-find_package(Boost 1.70.0 REQUIRED system serialization)
-target_link_libraries(listupdate PUBLIC Boost:headers Boost::system Boost:serialization)
+add_executable(algorithm-list-size-4 wf/algorithm_against_opt.cpp)
+
+target_compile_definitions(algorithm-list-size-4 PUBLIC COMP_RATIO=3.0)
+target_compile_definitions(algorithm-list-size-4 PUBLIC TSIZE=4)
+
+add_executable(algorithm-list-size-5 wf/algorithm_against_opt.cpp)
+
+target_compile_definitions(algorithm-list-size-5 PUBLIC COMP_RATIO=3.0)
+target_compile_definitions(algorithm-list-size-5 PUBLIC TSIZE=5)
+
+add_executable(algorithm-list-size-6 wf/algorithm_against_pairwise_opt.cpp)
+
+target_compile_definitions(algorithm-list-size-6 PUBLIC COMP_RATIO=3.0)
+target_compile_definitions(algorithm-list-size-6 PUBLIC TSIZE=6)
+
+
+add_executable(lowerbound-work-function-class wf/workfunction.cpp)
+target_compile_definitions(lowerbound-work-function-class PUBLIC COMP_RATIO=3.1)
+target_compile_definitions(lowerbound-work-function-class PUBLIC TSIZE=5)
+
+add_executable(workfunction-reach wf/workfunction_decide.cpp)
+add_executable(workfunction_verify wf/workfunction_verify.cpp)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(listupdate PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(algorithm-list-size-4 PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(algorithm-list-size-5 PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(algorithm-list-size-6 PUBLIC OpenMP::OpenMP_CXX)
 endif()
-add_executable(workfunction wf/workfunction.cpp
-        wf/game_graph.hpp
-        wf/double_zobrist.hpp
-        pairwise_wf_manager.hpp
-        digraph.hpp)
-add_executable(reachablewf wf/reachablewf.cpp
-        wf/double_zobrist.hpp
-        data_structures/char_flat_set.hpp
-        pairwise_wf_manager.hpp)
-add_executable(graph_test graph_test.cpp
-        graphs/bip_mru_potentials.hpp)
-add_executable(pairwise_workfunction wf/pairwise_workfunction.cpp
-        wf/pairwise_game_graph.hpp
-        wf/workfunction_verify.cpp)
-add_executable(digraph_test digraph_test.cpp)
-add_executable(workfunction-reach wf/workfunction_decide.cpp)
-add_executable(workfunction_verify wf/workfunction_verify.cpp)

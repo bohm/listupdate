@@ -44,9 +44,9 @@ public:
 
 
     explicit game_graph(wf_manager<SIZE> &w, bool wfa_adj = false, const std::string& binary_loadfile = "") : wf(w), wfa_adjacencies(wfa_adj) {
-        advsize = wf.reachable_wfs.size()* factorial[SIZE];
+        advsize = wf.reachable_workfunctions * factorial[SIZE];
         adv_vertices = new short[advsize];
-        algsize = wf.reachable_wfs.size() * factorial[SIZE] * SIZE;
+        algsize = wf.reachable_workfunctions * factorial[SIZE] * SIZE;
         alg_vertices = new short[algsize];
 
         if (wfa_adjacencies) {

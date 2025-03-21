@@ -38,7 +38,7 @@ int main() {
 
     // invs->print();
     wm.initialize_reachable(workfunctions_binary_filename);
-    uint64_t rchbl = wm.reachable_wfs.size();
+    uint64_t rchbl = wm.reachable_workfunctions;
     fprintf(stderr, "Reachable: %" PRIu64 ".\n", rchbl);
 
     // The actual deal.

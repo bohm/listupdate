@@ -10,15 +10,8 @@
 
 int main() {
     std::string workfunctions_filename = std::string("wfs-") + std::to_string(LISTSIZE) + std::string(".log");
-    std::string graph_binary_filename = std::string("wfs-graph-") + std::to_string(LISTSIZE)
-        + std::string("-ratio-") + std::to_string(RATIO) + std::string(".bin");
-
     std::string workfunctions_binary_filename = std::string("wfs-reachable-") + std::to_string(LISTSIZE) +
         std::string(".bin");
-    std::string last_three_filename = std::string("last-three-maximizers-") + std::to_string(LISTSIZE) +
-        std::string(".bin");
-    std::string reachable_vertices_filename = std::string("reachable-subgraph-") + std::to_string(LISTSIZE)
-    + std::string("-ratio-") + std::to_string(RATIO) + std::string(".bin");
 
 
     pg = new permutation_graph<LISTSIZE>();
@@ -43,9 +36,6 @@ int main() {
         bin_name = graph_binary_filename;
     }
     game_graph<TESTSIZE> g(wm, true, bin_name);
-    g.build_wfa_minima();
-    // Saving last three positions.
-    g.init_last_three();
     if (std::filesystem::exists(last_three_filename)) {
         fprintf(stderr, "Loading last three ADV choices from the binary file.\n");
         g.deserialize_last_three(last_three_filename);
@@ -72,36 +62,13 @@ int main() {
         }
 
         if (g.min_adv_potential() >= 1) {
-            fprintf(stdout, "The min ADV potential is higher than one.\n");
-            // wm.print_reachable(workfunctions_filename);
-            // g.print_potential();
-            /* if (!std::filesystem::exists(graph_binary_filename)) {
-                g.write_graph_binary(graph_binary_filename);
-            } */
-
-            if (g.last_three_maximizers != nullptr && !std::filesystem::exists(last_three_filename)) {
-                g.serialize_last_three(last_three_filename);
-            }
-
-            if (!std::filesystem::exists(reachable_vertices_filename)) {
-                g.wfa_reachable_via_last_three();
-                g.serialize_reachable_arrays(reachable_vertices_filename);
-            }
-
-            // g.wfa_lowerbound_potential_propagation();
-            /* digraph* tight_edge_dg = g.wfa_propagation_build_digraph();
-            tight_edge_dg->print();
-            tight_edge_dg->bellman_ford();
-            digraph* full_dg = g.wfa_convert_into_digraph();
-            full_dg->print();
-            full_dg->bellman_ford();
-            */
+            fprintf(stdout, "The min ADV potential is higher than one. An algorithm of this class may not exist.\n");
             return 0;
         }
         iter_count++;
     }
 
-    fprintf(stdout, "The potentials have stabilized with min potential 0.\n");
+    fprintf(stdout, "The potentials have stabilized with min potential 0. An algorithm likely exists.\n");
 
     if (!std::filesystem::exists(graph_binary_filename)) {
         g.write_graph_binary(graph_binary_filename);

@@ -3,15 +3,12 @@
 #include <cstdint>
 #include <cstdio>
 
+#include "constants.hpp"
 // using cost_t = long int;
 // using cost_t = long double; // Makes the most sense, to get the best precision if memory is not an issue.
 using cost_t = float; // If memory is an issue, you can use this.
 
 
-#define TSIZE 5
-
-constexpr int TESTSIZE = TSIZE;
-constexpr unsigned short LISTSIZE = TSIZE;
 
 // #define MEMORY memory_pairs
 // #define ALG_SINGLE_STEP alg_single_step_xoror
@@ -28,16 +25,6 @@ constexpr bool ALG_DEBUG = false;
 constexpr bool GRAPH_DEBUG = false;
 constexpr bool FRONT_ACCESS_COSTS_ONE = true;
 
-constexpr float EPSILON = 0.0001;
-constexpr int MULTIPLIER = 100;
-constexpr int ALG_MULTIPLIER = 2;
-constexpr int ADV_MULTIPLIER = 1;
-
-// constexpr long double RATIO = 2.9;
-// constexpr long double RATIO = 3.0;
-constexpr long double RATIO = 3.1;
-//constexpr long double RATIO = 3.556;
-constexpr float RECENCY_RATIO = 0.6;
 
 #define EDGE_WEIGHT edge_weight_param
 
